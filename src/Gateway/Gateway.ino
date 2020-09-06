@@ -18,13 +18,10 @@
  * Inclusion mode button:
  * - Connect GPIO5 (=D1) via switch to GND ('inclusion switch')
  *
- * Hardware SHA204 signing is currently not supported!
- *
- * Make sure to fill in your ssid and WiFi password below for ssid & pass.
  */
 
-#include <ArduinoOTA.h>
 #include "Gateway.h"
+#include <ArduinoOTA.h>
 #include <MySensors.h>
 #include "IrControl.h"
 #include "WeatherControl.h"
@@ -52,6 +49,7 @@ void presentSend(const T1 id, const T2 val) {
       PRINT("-- present Send break, ");
       PRINTV(id);
       PRINT("\n");
+      ERROR_LED();
       break;
     }
   }
@@ -102,6 +100,7 @@ void before() {
   ir.init();
   if (!weather.init(BMP_ADDRESS)) {
     PRINTLN("BMP280 sensor detect failed!");
+    ERROR_LED();
     for (;;);
   }
 }
@@ -127,15 +126,11 @@ void loop() {
   
 }
 
-void receive(const MyMessage &message) {
-    if (message.isAck()) {
+void receive(const MyMessage &msg) {
+    if (msg.isAck())
       PRINTLN("-- !! This is an ack from gateway..");
-      //return;
-    }
-    switch (message.type) {
-      case V_IR_SEND:
-      case V_IR_RECEIVE: ir.data(message); break;
-    }
+    if (msg.type == V_IR_SEND)
+      ir.data(msg);
 }
 
 bool presentData(const uint8_t id, const mysensors_sensor_t data) {

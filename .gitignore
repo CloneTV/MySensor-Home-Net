@@ -30,6 +30,10 @@
 *.exe
 *.out
 *.app
+<<<<<<< HEAD
 /src/Gateway/config.h
 /src/_tmp
 /src/Gateway/data/*.crt
+=======
+>>>>>>> 1720bfa48e26eb06aefff1e641a0ab694c738d26
+/src/build

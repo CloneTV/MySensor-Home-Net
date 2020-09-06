@@ -87,4 +87,10 @@
 #  endif
 #  define STR_MEM(A) F(A)
 
+#  if defined(MY_DEFAULT_ERR_LED_PIN)
+#    define ERROR_LED() digitalWrite(MY_DEFAULT_ERR_LED_PIN, HIGH)
+#  else
+#    define ERROR_LED()
+#  endif
+
 #endif
