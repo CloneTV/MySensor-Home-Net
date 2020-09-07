@@ -1,23 +1,21 @@
 /**
  *  This file is available under the terms of the MIT License, see the LICENSE file for full details
+ *  
+ *  Unsigned integer function, it does the bulk of the work, returns a String
+ *  Based on work done by Rob Tillaart on the print9 function from:
+ *  https://forum.arduino.cc/index.php?topic=143584.msg1519824#msg1519824
  */
 
 #include "Int64String.h"
-
-// Unsigned integer function, it does the bulk of the work, returns a String
-// Based on work done by Rob Tillaart on the print9 function from:
-// https://forum.arduino.cc/index.php?topic=143584.msg1519824#msg1519824
+#define base16char(A) ("0123456789ABCDEF"[A])
 
 String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {
-  // keep base within "reasonable limits
   if (base < 2)
     base = 2;
   else if (base > 16)
     base = 16;
 
-  // start at position 64 (65th byte) and work backwards
   uint8_t i = 64;
-  // 66 buffer for 64 characters (binary) + B prefix + \0
   char buffer[66] = {0};
 
   if (value == 0)
@@ -34,11 +32,8 @@ String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {
       multiplier *= base;
       base_multiplied++;
     }
-
-    // Five 64 bit devisions max
     while (value > multiplier) {
       uint64_t q = value / multiplier;
-      // get remainder without doing another division with %
       uint16_t r = value - q * multiplier;
 
       for (uint8_t j = 0; j < base_multiplied; j++) {
@@ -46,7 +41,6 @@ String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {
         buffer[i--] = base16char(r - rq * base);
         r = rq;
       }
-
       value = q;
     }
 
@@ -58,12 +52,10 @@ String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {
     }
   }
 
-  // Signed numbers only make sense for decimal numbers
   if (base == DEC && sign)
     buffer[i--] = '-';
   else if (prefix) {
     if (base == HEX) {
-      // 0x prefix
       buffer[i--] = 'x';
       buffer[i--] = '0';
     }
@@ -72,27 +64,18 @@ String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {
     else if (base == BIN)
       buffer[i--] = 'B';
   }
-
-  // return String starting at position i + 1
   return String(&buffer[i + 1]);
 }
 
-// Signed integer function, returns a String
-
 String Int64ToString(int64_t value, uint8_t base, bool prefix) {
-  // Signed numbers only make sense for decimal numbers
   bool sign = base == DEC && value < 0;
-  // if signed, make it positive
   uint64_t uvalue = sign ? -value : value;
-
-  // call the unsigned function to format the number
   return Int64ToString(uvalue, base, prefix, sign);
 }
 
 uint64_t StringToInt64(String str) {
   return StringToInt64(str.c_str(), str.length());
 }
-
 
 uint64_t StringToInt64(const char *s, uint16_t sz = 0U) {
   uint64_t val = 0ULL;

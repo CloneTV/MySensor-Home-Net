@@ -107,7 +107,7 @@ struct WeatherControl {
             cntm = 0U;
             p_raw = ((bmp->readPressure() + bmp->readPressure()) / 2);
             float t_ = bmp->readTemperature(),
-                  p_ = ( p_raw / 100.0F / 1.333);
+                  p_ = (p_raw / 100.0F / 1.333);
                   
             if (t != t_) {
                 t = t_;
