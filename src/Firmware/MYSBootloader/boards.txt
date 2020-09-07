@@ -1,0 +1,70 @@
+## Add these lines to your boards.txt file in the Arduino installation directory
+##
+## Arduino Pro or Pro Mini (3V3 & 5V, 1 - 16 MHz) w/ ATmega328 MYSBootloader
+## -------------------------------------------------
+## ** modify fuse from MYSBL8 8MHz RC **
+
+menu.frequency=Frequency
+
+MYSBL.name=ATmega328 with MYSBootloader 1.3.0
+
+MYSBL.upload.tool=avrdude
+MYSBL.upload.protocol=arduino
+MYSBL.upload.maximum_size=30720
+MYSBL.upload.maximum_data_size=2048
+MYSBL.bootloader.tool=avrdude
+MYSBL.build.mcu=atmega328p
+MYSBL.build.board=AVR_UNO
+MYSBL.build.core=arduino
+MYSBL.build.variant=standard
+
+MYSBL.menu.frequency.MYSBL16=16MHz XTAL
+MYSBL.menu.frequency.MYSBL16.build.f_cpu=16000000L
+MYSBL.menu.frequency.MYSBL16.upload.speed=115200
+MYSBL.menu.frequency.MYSBL16.bootloader.low_fuses=0xFF
+MYSBL.menu.frequency.MYSBL16.bootloader.high_fuses=0xD2
+MYSBL.menu.frequency.MYSBL16.bootloader.extended_fuses=0x06
+MYSBL.menu.frequency.MYSBL16.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL16.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL16.bootloader.file=MySensors/MYSBootloader_16MHz.hex
+
+MYSBL.menu.frequency.MYSBL8=8MHz RC My
+MYSBL.menu.frequency.MYSBL8.build.f_cpu=8000000L
+MYSBL.menu.frequency.MYSBL8.upload.speed=38400
+MYSBL.menu.frequency.MYSBL8.bootloader.low_fuses=0xE2
+MYSBL.menu.frequency.MYSBL8.bootloader.high_fuses=0xD2
+MYSBL.menu.frequency.MYSBL8.bootloader.extended_fuses=0xFE
+# 0x06
+MYSBL.menu.frequency.MYSBL8.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL8.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL8.bootloader.file=MySensors/MYSBootloader_8MHz.hex
+
+MYSBL.menu.frequency.MYSBL1=1MHz RC
+MYSBL.menu.frequency.MYSBL1.build.f_cpu=1000000L
+MYSBL.menu.frequency.MYSBL1.upload.speed=9600
+MYSBL.menu.frequency.MYSBL1.bootloader.low_fuses=0x62
+MYSBL.menu.frequency.MYSBL1.bootloader.high_fuses=0xD2
+MYSBL.menu.frequency.MYSBL1.bootloader.extended_fuses=0x06
+MYSBL.menu.frequency.MYSBL1.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL1.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL1.bootloader.file=MySensors/MYSBootloader_1MHz.hex
+
+MYSBL.menu.frequency.MYSBL8d=8MHz RC default (not work)
+MYSBL.menu.frequency.MYSBL8d.build.f_cpu=8000000L
+MYSBL.menu.frequency.MYSBL8d.upload.speed=38400
+MYSBL.menu.frequency.MYSBL8d.bootloader.low_fuses=0xE2
+MYSBL.menu.frequency.MYSBL8d.bootloader.high_fuses=0xD2
+MYSBL.menu.frequency.MYSBL8d.bootloader.extended_fuses=0x06
+MYSBL.menu.frequency.MYSBL8d.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL8d.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL8d.bootloader.file=MySensors/MYSBootloader_8MHz.hex
+
+MYSBL.menu.frequency.MYSBLNRF=8MHz RC NRFduino
+MYSBL.menu.frequency.MYSBLNRF.build.f_cpu=8000000L
+MYSBL.menu.frequency.MYSBLNRF.upload.speed=57600
+MYSBL.menu.frequency.MYSBLNRF.bootloader.low_fuses=0xFF
+MYSBL.menu.frequency.MYSBLNRF.bootloader.high_fuses=0xDA
+MYSBL.menu.frequency.MYSBLNRF.bootloader.extended_fuses=0x06
+MYSBL.menu.frequency.MYSBLNRF.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBLNRF.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBLNRF.bootloader.file=MySensors/MYSBootloader_NRFduino_8MHz.hex

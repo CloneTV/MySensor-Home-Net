@@ -93,4 +93,7 @@
 #    define ERROR_LED()
 #  endif
 
+#include <MySensors.h>
+#include "presenter.h"
+
 #endif

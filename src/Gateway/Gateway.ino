@@ -22,38 +22,21 @@
 
 #include "Gateway.h"
 #include <ArduinoOTA.h>
-#include <MySensors.h>
 #include "IrControl.h"
 #include "WeatherControl.h"
 
-const PROGMEM char *str_firmware[] = {
+const PROGMEM char * const str_firmware[] = {
   MY_HOSTNAME, MY_VERSION
 };
 
 #if defined(MY_DEBUG)
-const PROGMEM char *str_ota[] = {
+const PROGMEM char * const str_ota[] = {
   "OTA Progress: %u%%\r", "Error[%u]: "
 };
 #endif
 
 IrControl ir{};
 WeatherControl weather{};
-
-template<typename T1, typename T2>
-void presentSend(const T1 id, const T2 val) {
-  bool b = false;
-  uint32_t cnt = 0;
-  while (!b) {
-    b = presentData(id, val);
-    if (++cnt > 1000) {
-      PRINT("-- present Send break, ");
-      PRINTV(id);
-      PRINT("\n");
-      ERROR_LED();
-      break;
-    }
-  }
-}
 
 void setup() {
 
@@ -131,14 +114,4 @@ void receive(const MyMessage &msg) {
       PRINTLN("-- !! This is an ack from gateway..");
     if (msg.type == V_IR_SEND)
       ir.data(msg);
-}
-
-bool presentData(const uint8_t id, const mysensors_sensor_t data) {
-  return present(id, data);
-}
-bool presentData(const uint8_t id, const mysensors_data_t data) {
-  return request(id, data);
-}
-bool presentData(const char *name, const char *ver) {
-  return sendSketchInfo(name, ver);
 }

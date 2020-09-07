@@ -37,7 +37,7 @@
 //#define MY_RADIO_RFM69
 
 // Enabled repeater feature for this node
-#define MY_REPEATER_FEATURE
+#define MY_OTA_FIRMWARE_FEATURE
 
 #include <MySensors.h>
 #include <Bounce2.h>
