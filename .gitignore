@@ -34,3 +34,4 @@
 /src/build
 /src/Gateway/config.h
 /src/Gateway/data/*.crt
+/src/Firmware/MYSBootloader/.vs/MYSBootloader/v14
