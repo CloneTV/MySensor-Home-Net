@@ -54,17 +54,18 @@
 
 ### 4. Screen
 
-![Screen 1 build MYSbootloader](img/1.png)  
-![Screen 2 build MYSbootloader](img/2.png)  
-![Screen 3 build MYSbootloader](img/3.png)  
+![Screen 1 build MYSBootloader](img/1.png)  
+![Screen 2 build MYSBootloader](img/2.png)  
+![Screen 3 build MYSBootloader](img/3.png)  
 ![Screen 4 build Atmel Studio 7.0](img/7.png)  
-![Screen 5 install MYSbootloader](img/4.png)  
-![Screen 6 install MYSbootloader](img/5.png)  
+![Screen 5 install MYSBootloader](img/4.png)  
+![Screen 6 install MYSBootloader](img/5.png)  
 
 ### 5. Firmware HEX
 
-- [готовая прошивка MYSBootloader 328p 8Mhz 9600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_9600.hex)  
-- [готовая прошивка MYSBootloader 328p 8Mhz 57600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_57600.hex)  
+- [готовая прошивка `MYSBootloader` 328p 8Mhz 9600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_9600.hex)  
+- [готовая прошивка `MYSBootloader` 328p 8Mhz 57600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_57600.hex)  
+- [boards `MYSBootloader` list for Atmega328p Pro mini](https://raw.githubusercontent.com/CloneTV/MySensor-Home-Net/master/src/Firmware/MYSBootloader/boards.txt)  
 
 ### 6. Origin links
 
