@@ -2,6 +2,10 @@
 #include <Bounce2.h>
 
 struct AcDcRelay {
+#   if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+#     define ENABLE_DEBUG 1
+#   endif
+
     private:
         uint8_t state_[size_sensors]{};
         Bounce *bouncer_[size_sensors]{};
@@ -22,23 +26,23 @@ struct AcDcRelay {
 
             for (uint16_t i = 0U; i < size_sensors; i++) {
 
-                uint16_t node = setup_sensors[i][NODE_SENSOR_ID],
-                         pin_b = setup_sensors[i][PIN_SENSOR_BUTTON],
-                         pin_r = setup_sensors[i][PIN_SENSOR_RELAY];
+                uint16_t sensor = setup_sensors[i][INDEX_NODE_SENSOR_ID],
+                         pin_b = setup_sensors[i][INDEX_PIN_SENSOR_BUTTON],
+                         pin_r = setup_sensors[i][INDEX_PIN_SENSOR_RELAY];
 
                 pinMode(pin_b, INPUT_PULLUP);
                 digitalWrite(pin_b, HIGH);
                 bouncer_[i]->attach(pin_b);
                 bouncer_[i]->interval(ival);
-                state_[i] = SENSOR_INIT(loadState(node));
+                state_[i] = SENSOR_INIT(loadState(sensor));
 
                 pinMode(pin_r, OUTPUT);
                 digitalWrite(pin_r, ((state_[i]) ? HIGH : LOW));
 
-#               if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+#               if defined(ENABLE_DEBUG)
                   yield();
                   PRINTF("-- Set: reley=%u, state=%u\n",
-                    node, static_cast<uint16_t>(state_[i])
+                    sensor, static_cast<uint16_t>(state_[i])
                   );
 #               endif
             }
@@ -47,9 +51,9 @@ struct AcDcRelay {
             for (uint16_t i = 0U; i < size_sensors; i++) {
 
                 uint16_t cnt = 0U;
-                uint8_t node = static_cast<uint8_t>(setup_sensors[i][NODE_SENSOR_ID]);
+                uint8_t sensor = static_cast<uint8_t>(setup_sensors[i][INDEX_NODE_SENSOR_ID]);
                 
-                if (!presentSend(node, S_BINARY)) {
+                if (!presentSend(sensor, S_BINARY)) {
                     PRINTLN("-- sensor presentation timeout, halt..");
                     return false;
                 }
@@ -64,21 +68,21 @@ struct AcDcRelay {
                 if (!bouncer_[i]->fell())
                   continue;
                   
-                uint16_t node = setup_sensors[i][NODE_SENSOR_ID],
-                         pin_r = setup_sensors[i][PIN_SENSOR_RELAY];
+                uint16_t sensor = setup_sensors[i][INDEX_NODE_SENSOR_ID],
+                         pin_r = setup_sensors[i][INDEX_PIN_SENSOR_RELAY];
 
                 state_[i] = SENSOR_SET(state_[i]);
-                MyMessage msg(node, V_STATUS);
+                MyMessage msg(sensor, V_STATUS);
                 send(
                   msg.set(static_cast<bool>(state_[i])),
                   true
                 );
                 digitalWrite(pin_r, state_[i]);
                 
-#               if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+#               if defined(ENABLE_DEBUG)
                   yield();
                   PRINTF("-- Change (button): sensor=%u, state=%u\n",
-                      node, static_cast<uint16_t>(state_[i])
+                      sensor, static_cast<uint16_t>(state_[i])
                   );
 #               endif
 
@@ -93,12 +97,12 @@ struct AcDcRelay {
                 return;
 
               state_[sensor] = SENSOR_SET(state_[sensor]);
-              uint16_t pin_r = setup_sensors[sensor][PIN_SENSOR_RELAY];
+              uint16_t pin_r = setup_sensors[sensor][INDEX_PIN_SENSOR_RELAY];
               digitalWrite(pin_r, state_[sensor]);
               saveState(pin_r, state_[sensor]);
               INFO_LED(3);
 
-#             if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+#             if defined(ENABLE_DEBUG)
                 yield();
                 PRINTF("-- Change (remote): sensor=%u, state=%u\n",
                   msg.sensor, static_cast<uint16_t>(state_[sensor])

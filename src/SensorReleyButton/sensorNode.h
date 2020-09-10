@@ -8,11 +8,17 @@
 /* DEBUG */
 #  if (!defined(NO_DEBUG) || (defined(NO_DEBUG) && (NO_DEBUG == 0)))
 #    define MY_DEBUG
-#    if (!defined(NO_DEBUG_RADIO) || (defined(NO_DEBUG_RADIO) && (NO_DEBUG_RADIO == 0)))
+#    if (defined(NO_DEBUG_RADIO) && (NO_DEBUG_RADIO == 0))
 #      define MY_SPECIAL_DEBUG
 #      define MY_DEBUG_VERBOSE
 #      define MY_DEBUG_VERBOSE_RF24
 #      define MY_DEBUG_VERBOSE_SIGNING
+       /* OTA DEBUG ENABLE */
+#      define MY_DEBUG_OTA 0
+#      define MY_DEBUG_VERBOSE_OTA_UPDATE
+#      define MY_OTA_LOG_RECEIVER_FEATURE
+#      define MY_OTA_LOG_SENDER_FEATURE
+#      define MY_DEBUG_OTA_DISABLE_ECHO
 #    endif
 #  endif
 
@@ -24,9 +30,8 @@
 #  define MY_RF24_BASE_RADIO_ID 0x00,0xFC,0xE1,0xA8,0xA8
 // #  define MY_RF24_ENABLE_ENCRYPTION
 
-/* MYSENSOR OTA ENABLE FIRMWARE */
-// #  define MY_OTA_FIRMWARE_FEATURE // (Only Flash found)
-// #  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
+#  define MY_REPEATER_FEATURE
+#  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
 
 /* SERIAL ENABLE/DISABLE */
 #  if !defined(MY_DEBUG)
@@ -36,11 +41,15 @@
 #    define MY_BAUD_RATE 57600
 #  endif
 
+#  if (defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__))
+#    define AVR328 1
+#  endif
+
 #  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
 #    define PRINTINIT() Serial.begin(MY_BAUD_RATE)
 #    define PRINT(A) Serial.print(F(A))
 #    define PRINTV(A) Serial.print(A)
-#    if (defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__))
+#    if defined(AVR328)
 #      define PRINTF(A, ...) printf_avr328(A, __VA_ARGS__); Serial.flush()
 #    else
 #      define PRINTF(A, ...) Serial.printf(A, __VA_ARGS__); Serial.flush()
@@ -70,9 +79,27 @@
 
 ///
 
-#  define NODE_SENSOR_ID 0
-#  define PIN_SENSOR_BUTTON 1
-#  define PIN_SENSOR_RELAY 2
+#  define INDEX_NODE_SENSOR_ID 0
+#  define INDEX_PIN_SENSOR_BUTTON 1
+#  define INDEX_PIN_SENSOR_RELAY 2
+
+#  if !defined(PIN_INTERNAL_LIVE_VOLT)
+#    define PIN_INTERNAL_LIVE_VOLT 0
+#  endif
+#  if !defined(INTERNAL_LIVE_VOLT)
+#    define INTERNAL_LIVE_VOLT 252
+#  endif
+#  if !defined(INTERNAL_LIVE_TEMP)
+#    define INTERNAL_LIVE_TEMP 253
+#  endif
+#  if !defined(INTERNAL_LIVE_RSSI)
+#    define INTERNAL_LIVE_RSSI 254
+#  endif
+
+#  if !defined(AVR328)
+#    undef INTERNAL_LIVE_TEMP
+#    define INTERNAL_LIVE_TEMP 0
+#  endif
 
 ///
 
@@ -127,7 +154,7 @@ const PROGMEM char * const str_firmware[] = {
   MY_HOSTNAME, MY_VERSION
 };
 
-#  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+#  if (defined(AVR328) && defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
     static inline void printf_avr328(const char *fmt, ...) {
       char *buf = new char[256]{};
       va_list ap;
