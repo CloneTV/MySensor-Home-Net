@@ -41,10 +41,10 @@
 
 ### 3. Создание загрузчика MYSbootloader
 
-Инструкция как создать загрузчик `MYSbootloader` для `FOTA` со своими параметрами, например, номер канала, скорость передачи, мощность передатчика, CE и CSN пины, может что-то еще..  
+Инструкция как создать загрузчик `MYSbootloader` для `FOTA` со своими параметрами, например, номер канала, скорость передачи, мощность передатчика, `CE` и `CSN` пины, может что-то еще..  
 - 1. Скачиваем с github архив и распаковываем его желательно ближе к корню и на диск D:\ чтобы не было проблем с записью и меньше писанины путей к данной папке.
 - 2. Устанавливаем или открываем `Atmel Studio 7`  
-- 3.0.1 Открываем солюшен `MYSBootloaderRF24xx/MYSBootloaderRF24xx.cppproj`. Должны быть указанны переменные пути `%ATMEL_STUDIO% = Atmel Studio 7/base path` и `%ARDUINO_USER_LIB% = Arduino IDE path to user installation library`.  
+- 3.0.1 Открываем солюшен `src/Firmware/MYSBootloader/MYSBootloader.atsln`. Должны быть указанны переменные пути `%ATMEL_STUDIO% = Atmel Studio 7/base path` и `%ARDUINO_USER_LIB% = Arduino IDE path to user installation library`.  
 - 3.1.1 Или, в дальнейшем, после правок, заходим в папку с исходными текстами и запускаем `build.cmd`, или пишем `make`, собирая прошивку в коммандной строке.  
 - 3.1.2 Открываем `Atmel Studio 7.0 Command Promt`  
 - 4. Открываем в скачанном архиве файл `MYSBootloader.c`,`MySensorsBootloader.h` и вносим свои изменения.. Если `CE` и `CSN` пины не совпадают не с одним из предложенных вариантов необходимо внести изменения в файл `HW.h`.  
@@ -54,11 +54,12 @@
 
 ### 4. Screen
 
-![Screen 1 build MYSbootloader](img/1.jpg)  
-![Screen 2 build MYSbootloader](img/2.jpg)  
-![Screen 3 build MYSbootloader](img/3.jpg)  
-![Screen 4 install MYSbootloader](img/4.png)  
-![Screen 5 install MYSbootloader](img/5.png)  
+![Screen 1 build MYSbootloader](img/1.png)  
+![Screen 2 build MYSbootloader](img/2.png)  
+![Screen 3 build MYSbootloader](img/3.png)  
+![Screen 4 build Atmel Studio 7.0](img/7.png)  
+![Screen 5 install MYSbootloader](img/4.png)  
+![Screen 6 install MYSbootloader](img/5.png)  
 
 ### 5. Origin links
 
