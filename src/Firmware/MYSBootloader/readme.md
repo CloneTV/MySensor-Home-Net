@@ -8,10 +8,10 @@
 - В примере скетча зайти в Скетч → Показать папку скетча  
 - В открывшемся окне проводника Windows в адресной строке найти папку avr  
 - Перейти в папку avr  
-- Найти в папке avr файл boards.txt  
-- Открыть файл boards.txt для редактирования  
+- Найти в папке avr файл `boards.txt`  
+- Открыть файл `boards.txt` для редактирования  
 - Перейти в самый конец файла  
-- С новой строки вставить то что находится в файле boards.txt из скаченного архива  
+- С новой строки вставить то что находится в файле `boards.txt` из скаченного архива  
 - Сохранить и закрыть.  
 
 ![AVRDudess](img/6.png)  
@@ -61,7 +61,12 @@
 ![Screen 5 install MYSbootloader](img/4.png)  
 ![Screen 6 install MYSbootloader](img/5.png)  
 
-### 5. Origin links
+### 5. Firmware HEX
+
+- [готовая прошивка MYSBootloader 328p 8Mhz 9600](https://github.com/CloneTV/MySensor-Home-Net/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_9600.hex)  
+- [готовая прошивка MYSBootloader 328p 8Mhz 57600](https://github.com/CloneTV/MySensor-Home-Net/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_57600.hex)  
+
+### 6. Origin links
 
 - [mysensors.ru/forum 1](https://mysensors.ru/forum/viewtopic.php?f=5&t=501)  
 - [mysensors.ru/forum 2](https://mysensors.ru/forum/viewtopic.php?f=5&t=29)  

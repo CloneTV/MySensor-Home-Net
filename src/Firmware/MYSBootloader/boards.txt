@@ -8,29 +8,43 @@
 menu.frequency=Frequency
 
 MYSBL.name=ATmega328 Pro mini with MYSBootloader 1.3.0
+
+MYSBL.bootloader.tool=avrdude
+MYSBL.bootloader.unlock_bits=0x3F
+MYSBL.bootloader.lock_bits=0x0F
 MYSBL.upload.tool=avrdude
 MYSBL.upload.protocol=arduino
 MYSBL.upload.maximum_size=30720
 MYSBL.upload.maximum_data_size=2048
-MYSBL.bootloader.tool=avrdude
-MYSBL.bootloader.unlock_bits=0x3F
-MYSBL.bootloader.lock_bits=0x0F
+
 MYSBL.build.mcu=atmega328p
-MYSBL.build.board=AVR_PRO
 MYSBL.build.core=arduino
+MYSBL.build.board=AVR_PRO
 MYSBL.build.variant=eightanaloginputs
 
 ######################################################################
-## Arduino Pro or Pro Mini (3.3V, 8 MHz) ATmega328P [my firmware]
-MYSBL.menu.frequency.MYSBL8fw=8MHz RC default (my firmware)
-MYSBL.menu.frequency.MYSBL8fw.build.f_cpu=8000000L
-MYSBL.menu.frequency.MYSBL8wf.upload.speed=9600
-MYSBL.menu.frequency.MYSBL8fw.bootloader.low_fuses=0xFF
-MYSBL.menu.frequency.MYSBL8fw.bootloader.high_fuses=0xE2
-MYSBL.menu.frequency.MYSBL8fw.bootloader.extended_fuses=0xFD
-MYSBL.menu.frequency.MYSBL8fw.bootloader.unlock_bits=0x3F
-MYSBL.menu.frequency.MYSBL8fw.bootloader.lock_bits=0x0F
-MYSBL.menu.frequency.MYSBL8fw.bootloader.file=MySensors/MYSBootloader_m328p_8000000L_Mhz_9600.hex
+## Arduino Pro or Pro Mini (3.3V, 8 MHz) ATmega328P [my firmware 9600]
+MYSBL.menu.frequency.MYSBL8fw9600=8MHz RC default (my firmware 9600)
+MYSBL.menu.frequency.MYSBL8fw9600.build.f_cpu=8000000L
+MYSBL.menu.frequency.MYSBL8wf9600.upload.speed=9600
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.low_fuses=0xFF
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.high_fuses=0xDA
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.extended_fuses=0xFD
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.file=MySensors/MYSBootloader_m328p_8000000L_Mhz_9600.hex
+
+######################################################################
+## Arduino Pro or Pro Mini (3.3V, 8 MHz) ATmega328P [my firmware 57600]
+MYSBL.menu.frequency.MYSBL8fw9600=8MHz RC default (my firmware 57600)
+MYSBL.menu.frequency.MYSBL8fw9600.build.f_cpu=8000000L
+MYSBL.menu.frequency.MYSBL8wf9600.upload.speed=57600
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.low_fuses=0xFF
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.high_fuses=0xDA
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.extended_fuses=0xFD
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.unlock_bits=0x3F
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.lock_bits=0x0F
+MYSBL.menu.frequency.MYSBL8fw9600.bootloader.file=MySensors/MYSBootloader_m328p_8000000L_Mhz_57600.hex
 
 ######################################################################
 ## Arduino Pro or Pro Mini (3.3V, 8 MHz) ATmega328P [Default fw]
@@ -85,4 +99,5 @@ MYSBL.menu.frequency.MYSBL16.bootloader.extended_fuses=0x06
 MYSBL.menu.frequency.MYSBL16.bootloader.unlock_bits=0x3F
 MYSBL.menu.frequency.MYSBL16.bootloader.lock_bits=0x0F
 MYSBL.menu.frequency.MYSBL16.bootloader.file=MySensors/MYSBootloader_16MHz.hex
+
 
