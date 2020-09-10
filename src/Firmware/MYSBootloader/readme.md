@@ -63,8 +63,8 @@
 
 ### 5. Firmware HEX
 
-- [готовая прошивка MYSBootloader 328p 8Mhz 9600](https://github.com/CloneTV/MySensor-Home-Net/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_9600.hex)  
-- [готовая прошивка MYSBootloader 328p 8Mhz 57600](https://github.com/CloneTV/MySensor-Home-Net/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_57600.hex)  
+- [готовая прошивка MYSBootloader 328p 8Mhz 9600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_9600.hex)  
+- [готовая прошивка MYSBootloader 328p 8Mhz 57600](https://github.com/CloneTV/MySensor-Home-Net/raw/master/src/Firmware/MYSBootloader/hex/MYSBootloader_m328p_8000000L_Mhz_57600.hex)  
 
 ### 6. Origin links
 
