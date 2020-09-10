@@ -39,6 +39,9 @@ $(PROJECT).hex: $(PROJECT).elf
 out: $(PROJECT).hex
 	"$(BINPATH)avr-size" $(PROJECT).elf
 
+copy: $(PROJECT).hex
+	copy $(PROJECT).hex "$(COPYTO)/$(PROJECT)_$(ISP_MCU)_$(CLK)_Mhz_$(BAUDRATE).hex"
+
 load: clean out isp
 
 isp: $(PROJECT).hex

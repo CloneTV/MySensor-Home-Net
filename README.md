@@ -1,2 +1,6 @@
 # MySensor-Home-Net
-MySensor Home firmware
+
+MySensor Home firmware  
+
+- [build MYSBootloader firmware](src/Firmware/MYSBootloader/)  
+
