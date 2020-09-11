@@ -1,10 +1,15 @@
 
 ATMELSTUDIO := $(filter-out $@,$(MAKECMDGOALS))
 
-PROJECT = MYSBootloader
-MCU = atmega328p
-CLK = 8000000L
-BAUDRATE = 9600
+BAUDRATE :=
+PROJECT := MYSBootloader
+MCU := atmega328p
+CLK := 8000000L
+
+# BAUDRATE as 9600 38400 57600
+ifeq ($(BAUDRATE),)
+	BAUDRATE = 9600
+endif
 
 ISP_PORT = com9
 ISP_SPEED = $(BAUDRATE)

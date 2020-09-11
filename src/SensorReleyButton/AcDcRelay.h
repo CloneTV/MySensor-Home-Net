@@ -34,6 +34,13 @@ struct AcDcRelay {
                 digitalWrite(pin_b, HIGH);
                 bouncer_[i]->attach(pin_b);
                 bouncer_[i]->interval(ival);
+
+#               if (defined(LIGHT_ON_POWER) && (LIGHT_ON_POWER >= 0))
+                if (((uint16_t)ALL == (uint16_t)LIGHT_ON_POWER) ||
+                    (i == (uint16_t)LIGHT_ON_POWER))
+                    state_[i] = SENSOR_INIT(ON);
+                else
+#               endif
                 state_[i] = SENSOR_INIT(loadState(sensor));
 
                 pinMode(pin_r, OUTPUT);

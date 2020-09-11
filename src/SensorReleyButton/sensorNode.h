@@ -1,9 +1,13 @@
 #if !defined(__MY_SENSOR_NODE_H)
 #define __MY_SENSOR_NODE_H 1
 
+#define OFF 0U
+#define ON  1U
+#define ALL 255U
+
 #include "config.h"
 
-/* Firmware ID, Hostname -> config.h */
+/* Firmware ID, Hostname, Options -> see config.h */
 
 /* DEBUG */
 #  if (!defined(NO_DEBUG) || (defined(NO_DEBUG) && (NO_DEBUG == 0)))
@@ -14,11 +18,11 @@
 #      define MY_DEBUG_VERBOSE_RF24
 #      define MY_DEBUG_VERBOSE_SIGNING
        /* OTA DEBUG ENABLE */
-#      define MY_DEBUG_OTA 0
+//#      define MY_DEBUG_OTA 0
 #      define MY_DEBUG_VERBOSE_OTA_UPDATE
-#      define MY_OTA_LOG_RECEIVER_FEATURE
-#      define MY_OTA_LOG_SENDER_FEATURE
-#      define MY_DEBUG_OTA_DISABLE_ECHO
+//#      define MY_OTA_LOG_RECEIVER_FEATURE
+//#      define MY_OTA_LOG_SENDER_FEATURE
+//#      define MY_DEBUG_OTA_DISABLE_ECHO
 #    endif
 #  endif
 
@@ -28,10 +32,12 @@
 #  define MY_RF24_CS_PIN 10
 #  define MY_RF24_PA_LEVEL RF24_PA_HIGH
 #  define MY_RF24_BASE_RADIO_ID 0x00,0xFC,0xE1,0xA8,0xA8
+// #  define MY_RF24_IRQ_PIN 2
+// #  define MY_RX_MESSAGE_BUFFER_FEATURE
 // #  define MY_RF24_ENABLE_ENCRYPTION
 
-#  define MY_REPEATER_FEATURE
-#  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
+//#  define MY_REPEATER_FEATURE
+//#  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
 
 /* SERIAL ENABLE/DISABLE */
 #  if !defined(MY_DEBUG)
@@ -103,51 +109,52 @@
 
 ///
 
-#  if defined(LIGHT_SENSOR1)
+#  if defined(LIGHT_SENSOR)
+#    if (LIGHT_SENSOR == 1)
 
-#    define NODE_SENSOR_ID_1 0
-#    define PIN_SENSOR_BUTTON_1 4
-#    define PIN_SENSOR_RELAY_1 5
-#    define size_sensors 1U
+#      define NODE_SENSOR_ID_1 0
+#      define PIN_SENSOR_BUTTON_1 4
+#      define PIN_SENSOR_RELAY_1 5
+#      define size_sensors 1U
 
-     const PROGMEM uint16_t setup_sensors[][3] = {
-        { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 }
-     };
+       const PROGMEM uint16_t setup_sensors[][3] = {
+          { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 }
+       };
 
-#  elif defined(LIGHT_SENSOR2)
+#    elif (LIGHT_SENSOR == 2)
 
-#    define NODE_SENSOR_ID_1 0
-#    define NODE_SENSOR_ID_2 1
-#    define PIN_SENSOR_BUTTON_1 4
-#    define PIN_SENSOR_BUTTON_2 5
-#    define PIN_SENSOR_RELAY_1 6
-#    define PIN_SENSOR_RELAY_2 7
-#    define size_sensors 2U
+#      define NODE_SENSOR_ID_1 0
+#      define NODE_SENSOR_ID_2 1
+#      define PIN_SENSOR_BUTTON_1 4
+#      define PIN_SENSOR_BUTTON_2 5
+#      define PIN_SENSOR_RELAY_1 6
+#      define PIN_SENSOR_RELAY_2 7
+#      define size_sensors 2U
 
-     const PROGMEM uint16_t setup_sensors[][3] = {
-        { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 },
-        { NODE_SENSOR_ID_2, PIN_SENSOR_BUTTON_2, PIN_SENSOR_RELAY_2 }
-     };
+       const PROGMEM uint16_t setup_sensors[][3] = {
+          { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 },
+          { NODE_SENSOR_ID_2, PIN_SENSOR_BUTTON_2, PIN_SENSOR_RELAY_2 }
+       };
 
-#  elif defined(LIGHT_SENSOR3)
+#    elif (LIGHT_SENSOR == 3)
 
-#    define NODE_SENSOR_ID_1 0
-#    define NODE_SENSOR_ID_2 1
-#    define NODE_SENSOR_ID_3 2
-#    define PIN_SENSOR_BUTTON_1 4
-#    define PIN_SENSOR_BUTTON_2 5
-#    define PIN_SENSOR_BUTTON_3 6
-#    define PIN_SENSOR_RELAY_1 7
-#    define PIN_SENSOR_RELAY_2 8
-#    define PIN_SENSOR_RELAY_3 3
-#    define size_sensors 3U
+#      define NODE_SENSOR_ID_1 0
+#      define NODE_SENSOR_ID_2 1
+#      define NODE_SENSOR_ID_3 2
+#      define PIN_SENSOR_BUTTON_1 4
+#      define PIN_SENSOR_BUTTON_2 5
+#      define PIN_SENSOR_BUTTON_3 6
+#      define PIN_SENSOR_RELAY_1 7
+#      define PIN_SENSOR_RELAY_2 8
+#      define PIN_SENSOR_RELAY_3 3
+#      define size_sensors 3U
 
-     const PROGMEM uint16_t setup_sensors[][3] = {
-        { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 },
-        { NODE_SENSOR_ID_2, PIN_SENSOR_BUTTON_2, PIN_SENSOR_RELAY_2 },
-        { NODE_SENSOR_ID_3, PIN_SENSOR_BUTTON_3, PIN_SENSOR_RELAY_3 }
-     };
-
+       const PROGMEM uint16_t setup_sensors[][3] = {
+          { NODE_SENSOR_ID_1, PIN_SENSOR_BUTTON_1, PIN_SENSOR_RELAY_1 },
+          { NODE_SENSOR_ID_2, PIN_SENSOR_BUTTON_2, PIN_SENSOR_RELAY_2 },
+          { NODE_SENSOR_ID_3, PIN_SENSOR_BUTTON_3, PIN_SENSOR_RELAY_3 }
+       };
+#    endif
 #  endif
 
 const PROGMEM char * const str_firmware[] = {

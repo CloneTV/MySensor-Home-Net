@@ -1,9 +1,4 @@
 
-#define NO_DEBUG 0
-#define NO_DEBUG_RADIO 0
-#define LED_DEBUG 1
-#define LIGHT_SENSOR1 1
-
 #include "sensorNode.h"
 #include "AcDcRelay.h"
 #include "NodeStat.h"
@@ -15,7 +10,6 @@ NodeStat nstat = NodeStat();
 void setup() {
   PRINTINIT();
   INFO_LED(1);
-  transportSetNodeId();
 }
 void before() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -30,7 +24,7 @@ void presentation() {
     return;
 
   isRfGateway = relay.presentation();
-  PRINTF("-- Start: %s, radio=%d\n", str_firmware[0], isRfGateway);
+  PRINTF("-- Start: %s, relay=%d\n", str_firmware[0], isRfGateway);
   INFO_LED(3);
 }
 void loop() {

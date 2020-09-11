@@ -12,7 +12,7 @@
 
 extern nodeConfig_t _eepromNodeConfig;
 
-#define RF24_SETUP ( ( (RF24_DATARATE & 0x02 ) << 4) | ((RF24_DATARATE & 0x01 ) << 3) | (RF24_PA_LEVEL << 1) ) + 1
+#define RF24_SETUP (((RF24_DATARATE & 0x02 ) << 4) | ((RF24_DATARATE & 0x01 ) << 3) | (RF24_PA_LEVEL << 1)) + 1
 
 typedef enum { 
 	RF24_PA_MIN = 0, 
@@ -28,15 +28,15 @@ typedef enum {
 } rf24_datarate_t;
 
 #define RF24_CONFIG _BV(CRCO) | _BV(EN_CRC)
-#define _write_register(reg) ( (reg) | W_REGISTER)
-#define _read_register(reg) ( (reg) | R_REGISTER)
+#define _write_register(reg) ((reg) | W_REGISTER)
+#define _read_register(reg) ((reg) | R_REGISTER)
 
 uint8_t base_addr[RF24_ADDR_WIDTH] = { RF24_BASE_RADIO_ID };
 
 static uint8_t SPIBytes(const uint8_t addr, uint8_t* buf, uint8_t len, const bool aReadMode) {
 	CSN_LOW();
 	_delay_us(10);
-	uint8_t status = SPItransfer( addr );
+	uint8_t status = SPItransfer(addr);
 	while ( len-- ) {
 		if (aReadMode) {		
 			status = SPItransfer(NOP);
@@ -142,9 +142,9 @@ static bool writeMessage(const uint8_t recipient, uint8_t* buf, const uint8_t le
 	//stop listening
 	CE_LOW();
 	// switch to TX mode
-	_writeRegister(CONFIG, RF24_CONFIG | _BV(PWR_UP) ) ;
+	_writeRegister(CONFIG, RF24_CONFIG | _BV(PWR_UP)) ;
 	// flush FIFO and interrupts
-	//Flush_RXTX_CLI();
+	// flush_RXTX_CLI();
 	// set pipe 0 RX/TX address		
 	base_addr[0] = recipient;
 	setPipeAddress(RX_ADDR_P0);
@@ -152,11 +152,11 @@ static bool writeMessage(const uint8_t recipient, uint8_t* buf, const uint8_t le
 	// write payload
 	const bool result = writeBuf(buf, len);
 	// start listening	
-	_writeRegister(CONFIG, RF24_CONFIG | _BV(PWR_UP) | _BV(PRIM_RX) ) ;
+	_writeRegister(CONFIG, RF24_CONFIG | _BV(PWR_UP) | _BV(PRIM_RX)) ;
 	// set pipe0 RX address
 	_writeRegister(RX_ADDR_P0, _eepromNodeConfig.nodeId);
 	// flush FIFO and interrupts
-	//Flush_RXTX_CLI();
+	// flush_RXTX_CLI();
 	// go!
 
 	CE_HIGH(); // 4 us until CSN_LOW. No delay needed here.
@@ -183,7 +183,7 @@ static bool initRadio(void) {
 	// Enable dynamic payload length on pipe 0
 	_writeRegister(DYNPD, _BV(DPL_P0));	
 	// sanity check
-	return _readRegister(RF_SETUP)==RF24_SETUP;
+	return (_readRegister(RF_SETUP) == RF24_SETUP);
 }
 
 #endif // RF24_H
