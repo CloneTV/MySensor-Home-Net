@@ -1,7 +1,8 @@
 
-#include "sensorNode.h"
-#include "AcDcRelay.h"
-#include "NodeStat.h"
+#include "core/SensorNode.h"
+#include "core/Presenter.h"
+#include "core/NodeStat.h"
+#include "core/AcDcRelay.h"
 
 bool isRfGateway = false;
 AcDcRelay relay = AcDcRelay();
@@ -38,7 +39,9 @@ void loop() {
 }
 void receive(const MyMessage & msg) {
   if (msg.isAck()) {
-     PRINTLN("This is an ack from gateway");
+     PRINTLN("GW | ACK");
   }
-  relay.data(msg);
+  if (relay.data(msg))
+    return;
+  (void) nstat.data(msg);
 }

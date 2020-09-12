@@ -1,34 +1,32 @@
+#if !defined(__MY_SENSOR_ACDCRELAY_H)
+#define __MY_SENSOR_ACDCRELAY_H 1
 
 #include <Bounce2.h>
 
 struct AcDcRelay {
-#   if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
-#     define ENABLE_DEBUG 1
-#   endif
-
     private:
-        uint8_t state_[size_sensors]{};
-        Bounce *bouncer_[size_sensors]{};
+        uint8_t state_[size_light_sensors]{};
+        Bounce *bouncer_[size_light_sensors]{};
     
     public:
         ~AcDcRelay() {
-            for (uint16_t i = 0U; i < size_sensors; i++) {
+            for (uint16_t i = 0U; i < size_light_sensors; i++) {
                 delete bouncer_[i];
             }
         }
         AcDcRelay() {
-            for (uint16_t i = 0U; i < size_sensors; i++) {
+            for (uint16_t i = 0U; i < size_light_sensors; i++) {
                 bouncer_[i] = new Bounce();
                 state_[i] = 0U;
             }
         }
         void init(uint16_t ival = 5U) {
 
-            for (uint16_t i = 0U; i < size_sensors; i++) {
+            for (uint16_t i = 0U; i < size_light_sensors; i++) {
 
-                uint16_t sensor = setup_sensors[i][INDEX_NODE_SENSOR_ID],
-                         pin_b = setup_sensors[i][INDEX_PIN_SENSOR_BUTTON],
-                         pin_r = setup_sensors[i][INDEX_PIN_SENSOR_RELAY];
+                uint16_t sensor = setup_light_sensors[i][INDEX_NODE_SENSOR_ID],
+                         pin_b = setup_light_sensors[i][INDEX_PIN_SENSOR_BUTTON],
+                         pin_r = setup_light_sensors[i][INDEX_PIN_SENSOR_RELAY];
 
                 pinMode(pin_b, INPUT_PULLUP);
                 digitalWrite(pin_b, HIGH);
@@ -55,28 +53,27 @@ struct AcDcRelay {
             }
         }
         bool presentation() {
-            for (uint16_t i = 0U; i < size_sensors; i++) {
+            for (uint16_t i = 0U; i < size_light_sensors; i++) {
 
-                uint16_t cnt = 0U;
-                uint8_t sensor = static_cast<uint8_t>(setup_sensors[i][INDEX_NODE_SENSOR_ID]);
+                uint8_t sensor = static_cast<uint8_t>(setup_light_sensors[i][INDEX_NODE_SENSOR_ID]);
                 
-                if (!presentSend(sensor, S_BINARY)) {
-                    PRINTLN("-- sensor presentation timeout, halt..");
+                if (!presentSend(sensor, S_BINARY))
                     return false;
-                }
+                if (!presentSend(sensor, V_STATUS))
+                    return false;
             }
             return true;
         }
         void data() {
-            for (uint16_t i = 0U; i < size_sensors; i++) {
+            for (uint16_t i = 0U; i < size_light_sensors; i++) {
 
                 if (!bouncer_[i]->update())
                   continue;
                 if (!bouncer_[i]->fell())
                   continue;
                   
-                uint16_t sensor = setup_sensors[i][INDEX_NODE_SENSOR_ID],
-                         pin_r = setup_sensors[i][INDEX_PIN_SENSOR_RELAY];
+                uint16_t sensor = setup_light_sensors[i][INDEX_NODE_SENSOR_ID],
+                         pin_r = setup_light_sensors[i][INDEX_PIN_SENSOR_RELAY];
 
                 state_[i] = SENSOR_SET(state_[i]);
                 MyMessage msg(sensor, V_STATUS);
@@ -97,24 +94,29 @@ struct AcDcRelay {
                 INFO_LED(2);
             }
         }
-        void data(const MyMessage & msg) {
+        bool data(const MyMessage & msg) {
+          PRINTF("-- RELAY msg.sensor: %u, type: %u\n", msg.sensor, msg.type);
             if (msg.type == V_STATUS) {
-              uint8_t sensor = msg.getSensor();
-              if ((sensor >= size_sensors) || (state_[sensor] == msg.getByte()))
-                return;
+              if ((msg.sensor >= size_light_sensors) || (state_[msg.sensor] == msg.getByte()))
+                return false;
 
-              state_[sensor] = SENSOR_SET(state_[sensor]);
-              uint16_t pin_r = setup_sensors[sensor][INDEX_PIN_SENSOR_RELAY];
-              digitalWrite(pin_r, state_[sensor]);
-              saveState(pin_r, state_[sensor]);
+              state_[msg.sensor] = SENSOR_SET(state_[msg.sensor]);
+              uint16_t pin_r = setup_light_sensors[msg.sensor][INDEX_PIN_SENSOR_RELAY];
+              digitalWrite(pin_r, state_[msg.sensor]);
+              saveState(pin_r, state_[msg.sensor]);
               INFO_LED(3);
 
 #             if defined(ENABLE_DEBUG)
                 yield();
                 PRINTF("-- Change (remote): sensor=%u, state=%u\n",
-                  msg.sensor, static_cast<uint16_t>(state_[sensor])
+                  msg.sensor, static_cast<uint16_t>(state_[msg.sensor])
                 );
 #             endif
+              return true;
             }
+            return false;
         }
 };
+
+#endif
+

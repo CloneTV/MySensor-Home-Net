@@ -1,3 +1,5 @@
+#if !defined(__MY_SENSOR_PRESENTER_H)
+#define __MY_SENSOR_PRESENTER_H 1
 
 #include <Arduino.h>
 
@@ -30,3 +32,5 @@ bool presentSend(const T1 id, const T2 val) {
   }
   return b;
 }
+
+#endif

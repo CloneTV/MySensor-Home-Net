@@ -36,3 +36,7 @@
 /src/Gateway/data/*.crt
 /src/Firmware/MYSBootloader/.vs
 /src/Firmware/MYSBootloader/build.cmd
+/src/SensorFake/core/*.h
+/src/SensorReley/core/*.h
+/src/SensorReleyButton/core/*.h
+/src/SensorDimmerLed/core/*.h
