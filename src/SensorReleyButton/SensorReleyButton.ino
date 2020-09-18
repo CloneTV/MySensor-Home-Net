@@ -5,8 +5,8 @@
 #include "core/AcDcRelay.h"
 
 bool isRfGateway = false;
-AcDcRelay relay = AcDcRelay();
-NodeStat nstat = NodeStat();
+SensorInterface relay = AcDcRelay();
+SensorInterface nstat = NodeStat();
 
 void setup() {
   PRINTINIT();

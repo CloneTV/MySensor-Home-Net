@@ -20,7 +20,7 @@
 #    define initPwmHw()
 #endif
 
-static inline void initPwm(int16_t pin) {
+static inline void initPwm(uint8_t pin) {
   switch (pin) {
     case 3:
     case 11: {
@@ -46,7 +46,7 @@ static inline void initPwm(int16_t pin) {
   }
 }
 
-static inline void setPwm(int16_t pin, int16_t d) {
+static inline void setPwm(uint8_t pin, int16_t d) {
   byte mode;
   bool ext_pin = (pin == 3 || pin == 11);
   switch(d) {
@@ -103,7 +103,7 @@ static inline void setPwm(int16_t pin, int16_t d) {
   }
 }
 
-static inline void setupPwm(int16_t pin) {
+static inline void setupPwm(uint8_t pin) {
   switch (pin) {
     case 6:
     case 5: {

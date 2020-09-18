@@ -6,5 +6,5 @@
     "debugger": "jlink",
     "prebuild": "bash prebuild.sh",
     "configuration": "frequency=MYSBL8fw9600",
-    "programmer": "ArduinoISP"
+    "programmer": "USBasp"
 }

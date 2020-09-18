@@ -1,0 +1,1 @@
+xcopy ..\lib\core core /s /d

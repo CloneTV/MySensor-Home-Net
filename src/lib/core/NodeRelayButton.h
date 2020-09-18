@@ -3,23 +3,31 @@
 
 #include <Bounce2.h>
 
-struct AcDcRelay {
+class NodeRelay {
     private:
         uint8_t state_[size_light_sensors]{};
         Bounce *bouncer_[size_light_sensors]{};
+        bool sensorIsValid(uint16_t id) {
+          for (uint16_t i = 0U; i < size_light_sensors; i++) {
+            if (id == setup_light_sensors[i][INDEX_NODE_SENSOR_ID])
+              return true;
+          }
+          return false;
+        }
     
     public:
-        ~AcDcRelay() {
+        ~NodeRelay() {
             for (uint16_t i = 0U; i < size_light_sensors; i++) {
                 delete bouncer_[i];
             }
         }
-        AcDcRelay() {
+        NodeRelay() {
             for (uint16_t i = 0U; i < size_light_sensors; i++) {
                 bouncer_[i] = new Bounce();
                 state_[i] = 0U;
             }
         }
+        void init() {}
         void init(uint16_t ival = 5U) {
 
             for (uint16_t i = 0U; i < size_light_sensors; i++) {
@@ -46,23 +54,29 @@ struct AcDcRelay {
 
 #               if defined(ENABLE_DEBUG)
                   yield();
-                  PRINTF("-- Set: reley=%u, state=%u\n",
-                    sensor, static_cast<uint16_t>(state_[i])
+                  PRINTF("-- Set: reley=%u, pin=%u, state=%u\n",
+                    sensor, pin_r, (uint16_t) state_[i]
                   );
 #               endif
             }
         }
         bool presentation() {
-            for (uint16_t i = 0U; i < size_light_sensors; i++) {
+          
+          PRINTLN("NODE RELAY | presentation");
+          for (uint16_t i = 0U; i < size_light_sensors; i++) {
 
-                uint8_t sensor = static_cast<uint8_t>(setup_light_sensors[i][INDEX_NODE_SENSOR_ID]);
+            uint8_t sensor = static_cast<uint8_t>(setup_light_sensors[i][INDEX_NODE_SENSOR_ID]);
                 
-                if (!presentSend(sensor, S_BINARY))
-                    return false;
-                if (!presentSend(sensor, V_STATUS))
-                    return false;
+            if (!presentSend(sensor, S_BINARY)) {
+              PRINTLN("NODE RELAY | S_BINARY - EXIT");
+              return false;
             }
-            return true;
+            if (!presentSend(sensor, V_STATUS)) {
+              PRINTLN("NODE RELAY | V_STATUS - EXIT");
+              return false;
+            }
+          }
+          return true;
         }
         void data() {
             for (uint16_t i = 0U; i < size_light_sensors; i++) {
@@ -75,7 +89,7 @@ struct AcDcRelay {
                 uint16_t sensor = setup_light_sensors[i][INDEX_NODE_SENSOR_ID],
                          pin_r = setup_light_sensors[i][INDEX_PIN_SENSOR_RELAY];
 
-                state_[i] = SENSOR_SET(state_[i]);
+                state_[i] = SENSOR_INVERSE(state_[i]);
                 MyMessage msg(sensor, V_STATUS);
                 send(
                   msg.set(static_cast<bool>(state_[i])),
@@ -86,7 +100,7 @@ struct AcDcRelay {
 #               if defined(ENABLE_DEBUG)
                   yield();
                   PRINTF("-- Change (button): sensor=%u, state=%u\n",
-                      sensor, static_cast<uint16_t>(state_[i])
+                      sensor, (uint16_t) state_[i]
                   );
 #               endif
 
@@ -95,27 +109,41 @@ struct AcDcRelay {
             }
         }
         bool data(const MyMessage & msg) {
-          PRINTF("-- RELAY msg.sensor: %u, type: %u\n", msg.sensor, msg.type);
-            if (msg.type == V_STATUS) {
-              if ((msg.sensor >= size_light_sensors) || (state_[msg.sensor] == msg.getByte()))
-                return false;
 
-              state_[msg.sensor] = SENSOR_SET(state_[msg.sensor]);
+          switch (msg.getType()) {
+            case V_STATUS: {
+              if (!sensorIsValid(msg.sensor))
+                return false;
+              break;
+            }
+            default:
+              return false;
+          }
+          
+          PRINTF("-- RELAY msg.sensor: %u, type: %u\n", msg.sensor, static_cast<uint16_t>(msg.type));
+
+          switch (msg.getType()) {
+            case V_STATUS: {
+              if (state_[msg.sensor] == msg.getByte())
+                return true;
+
+              state_[msg.sensor] = SENSOR_INVERSE(state_[msg.sensor]);
               uint16_t pin_r = setup_light_sensors[msg.sensor][INDEX_PIN_SENSOR_RELAY];
               digitalWrite(pin_r, state_[msg.sensor]);
               saveState(pin_r, state_[msg.sensor]);
               INFO_LED(3);
 
 #             if defined(ENABLE_DEBUG)
-                yield();
-                PRINTF("-- Change (remote): sensor=%u, state=%u\n",
-                  msg.sensor, static_cast<uint16_t>(state_[msg.sensor])
-                );
+              yield();
+              PRINTF("-- Change (remote): sensor=%u, state=%u\n",
+                msg.sensor, static_cast<uint16_t>(state_[msg.sensor])
+              );
 #             endif
-              return true;
+              break;
             }
-            return false;
         }
+        return true;
+      }
 };
 
 #endif

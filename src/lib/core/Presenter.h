@@ -33,4 +33,19 @@ bool presentSend(const T1 id, const T2 val) {
   return b;
 }
 
+static inline bool presentData(const uint8_t id, const mysensors_sensor_t data) {
+  return present(id, data);
+}
+
+static inline void presentTimer(uint16_t sec) {
+  uint16_t cnt = 0U,
+           cmp = (sec * 2);
+  while (++cnt < cmp) {
+    PRINT(".");
+    wait(500);
+    yield();
+  }
+  PRINTLN(" - present Timer end");
+}
+
 #endif
