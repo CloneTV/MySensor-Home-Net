@@ -13,7 +13,9 @@ class SensorInterface {
 
     public:
         SensorInterface(T const * cls) {
-            pclass = cls;
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                pclass = cls;
+            }
         }
         ~SensorInterface() {
             delete pclass;

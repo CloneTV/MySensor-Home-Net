@@ -134,11 +134,6 @@
 #    define INTERNAL_LIVE_RSSI 254
 #  endif
 
-#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
-#    undef INTERNAL_LIVE_TEMP
-#    define INTERNAL_LIVE_TEMP 0
-#  endif
-
 #  if defined(MY_DEBUG)
    const PROGMEM char * const str_build[] = {
        __DATE__, __TIME__, __VERSION__
@@ -168,6 +163,8 @@ const PROGMEM char * const str_firmware[] = {
 #include "NodeSensors.h"
 #include "NodeLiveLight.h"
 #include "NodeLiveTemp.h"
+#include "NodeLiveBat.h"
+#include "NodeLiveRSSI.h"
 #include "PwmHw.h"
 
 /* ------- ENABLE/DISABLE BLOCK ------- */
@@ -187,12 +184,10 @@ const PROGMEM char * const str_firmware[] = {
 #     define ENABLE_LIVE_SENSOR_ILLUMINATION 1
 #   endif
 
-#if defined(ENABLE_LIVE_SENSOR_ILLUMINATION)
-  NodeLiveLight light__ = NodeLiveLight(), *clsLight = &light__;
-# define LIGHTINIT() light__.init()
-#else
-  NodeLiveLight *clsLight = nullptr;
-# define LIGHTINIT()
-#endif
+#   if defined(ENABLE_LIVE_SENSOR_ILLUMINATION)
+      NodeLiveLight nllight__ = NodeLiveLight(), *clsLight = &nllight__;
+#   else
+      NodeLiveLight *clsLight = nullptr;
+#   endif
 
 #endif

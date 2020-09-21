@@ -42,6 +42,26 @@ class NodeRelay {
         EventRelay ev[0]{};
 #    endif
 #  endif
+        void AutoOff(uint8_t & idx) {
+            if (ev[idx].s == LOW)
+              return;
+            
+            switch(light->getState()) {
+              case NodeLiveLight::LIGHTS::Bright:
+              case NodeLiveLight::LIGHTS::High:
+              case NodeLiveLight::LIGHTS::Light:
+                break;
+              default:
+                return;
+            }
+            ev[idx].s = LOW;
+            change(idx);
+        }
+        void change(uint8_t & idx) {
+            digitalWrite(ev[idx].p, ev[idx].s);
+            saveState(ev[idx].n, ev[idx].s);
+            reportMsg(ev[idx].n, V_STATUS, static_cast<bool>(ev[idx].s));
+        }
     
     public:
         NodeRelay () {
@@ -73,7 +93,6 @@ class NodeRelay {
                 );
                 */
             }
-            isChange = true;
           }
         }
         bool presentation() {
@@ -88,13 +107,24 @@ class NodeRelay {
             if (!presentSend(ev[i].n, V_STATUS))
               return false;
           }
+          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            isChange = true;
+          }
           return true;
         }
         void data(uint16_t & cnt) {
 
+          if ((cnt % 70) == 0) {
+            for (uint8_t i = 0U; i < __NELE(ev); i++)
+              AutoOff(i);
+          }
+
           if (!isChange)
             return;
-          isChange = false;
+          
+          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            isChange = false;
+          }
 
           /*
           PRINTLN("-- NODE RELAY | begin data");
@@ -105,9 +135,7 @@ class NodeRelay {
               continue;
 
             ev[i].e = LOW;
-            digitalWrite(ev[i].p, ev[i].s);
-            saveState(ev[i].n, ev[i].s);
-            reportMsg(ev[i].n, V_STATUS, static_cast<bool>(ev[i].s));
+            change(i);
                 
             /*
             PRINTF("-- CHANGE RELAY | id=%u, pin=%u, state=%u, event=%u\n",
@@ -143,7 +171,7 @@ class NodeRelay {
               if (ev[idx].s == msg.getByte())
                 return true;
 
-              MY_CRITICAL_SECTION {
+              ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
                 ev[idx].s = ((ev[idx].s > 0U) ? 0U : 1U);
                 ev[idx].e = HIGH;
                 isChange = true;

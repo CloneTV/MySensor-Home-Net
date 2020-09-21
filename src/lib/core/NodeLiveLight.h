@@ -3,6 +3,8 @@
 
 /* ------- LIGHT LEVEL SENSOR ------- */
 
+const char PROGMEM btn_name[] = "Auto Lights";
+
 class NodeLiveLight {
 
     public:
@@ -24,13 +26,16 @@ class NodeLiveLight {
         LIGHTS state = LIGHTS::None;
         void calibrate() {
             int16_t v1 = 0, v2 = 0;
-            while (millis() < 2500) {
+            while (millis() < 5000) {
+                wait(100);
                 int16_t v = analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
                 v1 = ((v1 < v) ? v : v1);
                 v2 = ((v2 > v) ? v : v2);
                 yield();
             }
             offset = (v1 - v2);
+            if (offset > 30)
+                offset = 0;
         }
         uint8_t getAutoId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_AUTO_LIGHT);
@@ -40,24 +45,29 @@ class NodeLiveLight {
         }
 
     public:
+        void init(uint16_t) {}
         void init() {
             calibrate();
-            isCalculate = static_cast<bool>(loadState(getAutoId()));
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                isCalculate = static_cast<bool>(loadState(getAutoId()));
+            }
         }
-        LIGHTS read() {
+        NodeLiveLight::LIGHTS read() {
 
             int16_t val_ = analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
             val_ = ((val_ <= offset) ? val_ : (val_ - offset));
             if (val_ == val)
                 return LIGHTS::None;
-            val = val_;
 
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                val = val_;
+            }
                  if (val <= 10)  state = LIGHTS::None;
             else if (val <= 50)  state = LIGHTS::Dark;
-            else if (val <= 200) state = LIGHTS::Gloomy;
-            else if (val <= 500) state = LIGHTS::Dim;
-            else if (val <= 700) state = LIGHTS::Light;
-            else if (val <= 800) state = LIGHTS::Bright;
+            else if (val <= 150) state = LIGHTS::Gloomy;
+            else if (val <= 300) state = LIGHTS::Dim;
+            else if (val <= 500) state = LIGHTS::Light;
+            else if (val <= 700) state = LIGHTS::Bright;
             else                 state = LIGHTS::High;
 
             PRINTF("-- LIGHT LEVEL SENSOR: %d/%d (%u)\n", val, offset, (uint16_t)state);
@@ -65,7 +75,7 @@ class NodeLiveLight {
         int16_t getVal() {
             return val;
         }
-        LIGHTS getState() {
+        NodeLiveLight::LIGHTS getState() {
             return ((isCalculate) ? state : LIGHTS::None);
         }
         bool presentation() {
@@ -79,10 +89,14 @@ class NodeLiveLight {
               return false;
             if (!presentSend(lid, V_LIGHT_LEVEL))
               return false;
-            if (!presentSend(aid, S_BINARY))
+            if (!presentSend(aid, S_BINARY, btn_name))
               return false;
             if (!presentSend(aid, V_STATUS))
               return false;
+            
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                isChange = true;
+            }
             return true;
         }
         void data(uint16_t & cnt) {
@@ -95,19 +109,23 @@ class NodeLiveLight {
             if (!isChange)
                 return;
             
-            isChange = false;
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                isChange = false;
+            }
             reportMsg(getAutoId(), V_STATUS, isCalculate);
         }
         bool data(const MyMessage & msg) {
             
-            if ((msg.sensor != INTERNAL_LIVE_AUTO_LIGHT) || (msg.type != V_STATUS))
+            if ((msg.sensor != getAutoId()) || (msg.type != V_STATUS))
                 return false;
 
             if (isCalculate == msg.getBool())
                 return true;
 
-            isCalculate = msg.getBool();
-            isChange = true;
+            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+                isCalculate = msg.getBool();
+                isChange = true;
+            }
             saveState(msg.sensor, isCalculate);
             return isChange;
         }

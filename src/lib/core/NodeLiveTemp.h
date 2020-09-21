@@ -18,6 +18,8 @@ class NodeLiveTemp {
         }
 
     public:
+        void init(uint16_t) {}
+        void init() {}
         bool presentation() {
             /*
               PRINTLN("NODE TEMP | presentation");
