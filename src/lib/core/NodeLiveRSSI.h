@@ -7,7 +7,7 @@
 #  if defined(POLL_WAIT_SECONDS)
 #    undef POLL_WAIT_SECONDS
 #  endif
-#define POLL_WAIT_SECONDS 90U
+#define POLL_WAIT_SECONDS 182U
 
 class NodeLiveRssi {
     private:

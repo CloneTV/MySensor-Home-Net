@@ -1,1 +1,1 @@
-xcopy ..\lib\core core /s /d
+# xcopy ..\lib\core core /s /d

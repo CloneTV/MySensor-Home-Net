@@ -1,6 +1,8 @@
 #if !defined(__MY_SENSOR_DIMMER_H)
 #define __MY_SENSOR_DIMMER_H 1
 
+# if defined(ENABLE_SENSOR_DIMMER)
+
 #  if !defined(LIGHT_SENSOR)
 #    define LIGHT_SENSOR 0
 #  endif
@@ -32,7 +34,7 @@ typedef struct _EventDimmer {
 class NodeDimmer {
 
     private:
-        bool isChange = false;
+        bool isChange = true;
         NodeLiveLight const *light;
 
 #  if defined(DIMMER_SENSOR)
@@ -176,14 +178,13 @@ class NodeDimmer {
                 if (!presentSend(ev[i].n, V_PERCENTAGE))
                     return false;
             }
-            isChange = true;
             return true;
         }
         void data(uint16_t & cnt) {
 
           if ((cnt % 65) == 0) {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
-              if (ev[i].e == LOW)
+              if (ev[i].s == LOW)
                 continue;
               fadeAuto(i);
             }
@@ -282,4 +283,5 @@ class NodeDimmer {
         }
 };
 
+# endif
 #endif

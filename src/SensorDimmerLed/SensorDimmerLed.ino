@@ -1,8 +1,5 @@
 
 #include "core/NodeOptions.h"
-#include "core/NodeDimmer.h"
-#include "core/NodeRelay.h"
-#include "core/SensorInterface.h"
 
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;

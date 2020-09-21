@@ -60,14 +60,25 @@
 #    define __AVR_INTERNAL_LIVE_COMPATIBLE__ 1
 #  endif
 
+#  if !defined(DIMMER_SENSOR)
+#    define DIMMER_SENSOR 0
+#  endif
+#  if !defined(LIGHT_SENSOR)
+#    define LIGHT_SENSOR 0
+#  endif
+#  if !defined(LIGHT_SENSOR_BTN)
+#    define LIGHT_SENSOR_BTN 0
+#  endif
+
 #  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
+
 #    define PRINTINIT() Serial.begin(MY_BAUD_RATE)
 #    define PRINTBUILD() {                                                                                                     \
-              const PROGMEM char build_sketch[] = "-- Build: %s - %s, %s\n-- Name: [%s:%s]\n-- Init: dimmers=%u, releys=%u\n"; \
+              const PROGMEM char build_sketch[] = "-- Build: %s - %s, %s\n-- Name: [%s:%s]\n-- Init: dimmers=%u, releys=%u, releysBtn=%u\n"; \
               PRINTF(build_sketch,                                                                                             \
                      str_build[0], str_build[1], str_build[2],                                                                 \
                      str_firmware[0], str_firmware[1],                                                                         \
-                     DIMMER_SENSOR, LIGHT_SENSOR); }
+                     DIMMER_SENSOR, LIGHT_SENSOR, LIGHT_SENSOR_BTN); }
 
 #    define PRINT(A) Serial.print(F(A))
 #    define PRINTV(A) Serial.print(A)
@@ -161,11 +172,8 @@ const PROGMEM char * const str_firmware[] = {
 #include <Wire.h>
 #include <MySensors.h>
 #include "NodeSensors.h"
-#include "NodeLiveLight.h"
-#include "NodeLiveTemp.h"
-#include "NodeLiveBat.h"
-#include "NodeLiveRSSI.h"
 #include "PwmHw.h"
+#include "NodeLiveLight.h"
 
 /* ------- ENABLE/DISABLE BLOCK ------- */
 
@@ -173,21 +181,34 @@ const PROGMEM char * const str_firmware[] = {
 #     define MY_AVR_TEMPERATURE_OFFSET 334
 #     define MY_AVR_TEMPERATURE_GAIN 0.1
 #     define ENABLE_LIVE_SENSOR_TEMP 1
+#     include "NodeLiveTemp.h"
 #   endif
 #   if (INTERNAL_LIVE_RSSI > 0)
 #     define ENABLE_LIVE_SENSOR_RSSI 1
+#     include "NodeLiveRSSI.h"
 #   endif
-#   if (defined(INTERNAL_LIVE_VOLT_PIN) && (INTERNAL_LIVE_VOLT_PIN >= 0))
+#   if (INTERNAL_LIVE_VOLT_PIN >= 0)
 #     define ENABLE_LIVE_SENSOR_VOLT 1
+#     include "NodeLiveBat.h"
 #   endif
-#   if (defined(INTERNAL_LIVE_ILLUMINATION_PIN) && (INTERNAL_LIVE_ILLUMINATION_PIN >= 0))
+#   if (INTERNAL_LIVE_ILLUMINATION_PIN >= 0)
 #     define ENABLE_LIVE_SENSOR_ILLUMINATION 1
-#   endif
-
-#   if defined(ENABLE_LIVE_SENSOR_ILLUMINATION)
       NodeLiveLight nllight__ = NodeLiveLight(), *clsLight = &nllight__;
 #   else
       NodeLiveLight *clsLight = nullptr;
 #   endif
+#   if (LIGHT_SENSOR > 0)
+#     define ENABLE_SENSOR_RELAY 1
+#     include "NodeRelay.h"
+#   elif (LIGHT_SENSOR_BTN > 0)
+#     define ENABLE_SENSOR_RELAY_BTN 1
+#     include "NodeRelayButton.h"
+#   endif
+#   if (DIMMER_SENSOR > 0)
+#     define ENABLE_SENSOR_DIMMER 1
+#     include "NodeDimmer.h"
+#   endif
+
+#include "SensorInterface.h"
 
 #endif

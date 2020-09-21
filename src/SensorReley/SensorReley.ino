@@ -3,7 +3,7 @@
 
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;
-SensorInterface<NodeRelayButton> nrelay = SensorInterface<NodeRelayButton>(new NodeRelayButton(clsLight));
+SensorInterface<NodeRelay>    nrelay = SensorInterface<NodeRelay>(new NodeRelay(clsLight));
 SensorInterface<NodeLiveTemp> nltemp = SensorInterface<NodeLiveTemp>(new NodeLiveTemp());
 SensorInterface<NodeLiveBat>  nlbat  = SensorInterface<NodeLiveBat>(new NodeLiveBat());
 SensorInterface<NodeLiveRssi> nlrssi = SensorInterface<NodeLiveRssi>(new NodeLiveRssi());

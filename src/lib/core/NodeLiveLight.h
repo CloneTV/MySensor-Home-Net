@@ -27,7 +27,7 @@ class NodeLiveLight {
 
     private:
         bool isCalculate = true,
-             isChange = false,
+             isChange = true,
              isStart = true;
         int16_t rawlight = 0,
                 offset = 0;
