@@ -90,12 +90,12 @@ void loop() {
 
   } else if (isTransportReady()) {
     
+    clsLight->data(cnt);
     ndimm.data(cnt);
     nrelay.data(cnt);
     nltemp.data(cnt);
     nlbat.data(cnt);
     nlrssi.data(cnt);
-    clsLight->data(cnt);
 
     cnt++;
     if (cnt >= 60000U)
@@ -107,10 +107,14 @@ void loop() {
 }
 void receive(const MyMessage & msg) {
   if (msg.isAck()) {
+    /*
      PRINTLN("GW | ACK");
+     */
      return;
   }
+  /*
   PRINTLN("GW | receive");
+   */
   
   if (clsLight->data(msg))
     return;

@@ -102,14 +102,12 @@ class NodeRelay {
           */
           for (uint8_t i = 0U; i < __NELE(ev); i++) {
 
-            if (!presentSend(ev[i].n, S_BINARY))
+            if (!presentSend(ev[i].n, S_BINARY, "Relay.Lights"))
               return false;
             if (!presentSend(ev[i].n, V_STATUS))
               return false;
           }
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-            isChange = true;
-          }
+          isChange = true;
           return true;
         }
         void data(uint16_t & cnt) {
@@ -122,9 +120,7 @@ class NodeRelay {
           if (!isChange)
             return;
           
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-            isChange = false;
-          }
+          isChange = false;
 
           /*
           PRINTLN("-- NODE RELAY | begin data");
@@ -171,11 +167,9 @@ class NodeRelay {
               if (ev[idx].s == msg.getByte())
                 return true;
 
-              ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                ev[idx].s = ((ev[idx].s > 0U) ? 0U : 1U);
-                ev[idx].e = HIGH;
-                isChange = true;
-              }
+              ev[idx].s = msg.getByte();
+              ev[idx].e = HIGH;
+              isChange = true;
               INFO_LED(ev[idx].n);
               break;
             }

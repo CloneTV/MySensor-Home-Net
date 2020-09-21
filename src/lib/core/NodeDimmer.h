@@ -6,6 +6,13 @@
 #  endif
 #  define FADE_DELAY 10
 
+#define AUTOLIGHT(B)                          \
+    if (ev[idx].val > B)                      \
+      val = map(ev[idx].val, 0, 100, 0, B);   \
+    else                                      \
+      val = B
+
+
 /*
     EventSensor.n = sensor id
     EventSensor.p = sensor pin
@@ -13,7 +20,7 @@
     EventSensor.o = sensor old state
     EventSensor.e = event enable/disable
     EventSensor.val = incoming procentage value
-    EventSensor.old = old procentage value
+    EventSensor.old = old procentage value // NOT Modify!
  */
 typedef struct _EventDimmer {
   uint8_t n, p, s, e, o;
@@ -53,40 +60,47 @@ class NodeDimmer {
 #    endif
 #  endif
         void fadeAuto(uint8_t & idx) {
-            if (ev[idx].s == LOW)
-              return;
 
             int16_t val = -1;
             
             switch(light->getState()) {
-              case NodeLiveLight::LIGHTS::Bright:
-              case NodeLiveLight::LIGHTS::High: {
+              case NodeLiveLight::LIGHTS::Bright: {
                 val = 0;
                 break;
               }
+              case NodeLiveLight::LIGHTS::High: {
+                AUTOLIGHT(25);
+                break;
+              }
               case NodeLiveLight::LIGHTS::Light: {
-                val = map(ev[idx].val, 0, 100, 0, 50);
+                AUTOLIGHT(45);
                 break;
               }
               case NodeLiveLight::LIGHTS::Dim: {
-                val = map(ev[idx].val, 0, 100, 0, 70);
+                AUTOLIGHT(65);
                 break;
               }
               case NodeLiveLight::LIGHTS::Gloomy: {
-                val = map(ev[idx].val, 0, 100, 0, 90);
+                AUTOLIGHT(85);
                 break;
               }
-              case NodeLiveLight::LIGHTS::None:
               case NodeLiveLight::LIGHTS::Dark: {
+                if (ev[idx].val == 100)
+                  return;
+                else
+                  val = 100;
+                break;
+              }
+              case NodeLiveLight::LIGHTS::None: {
                 return;
               }
             }
-            PRINTF("-- AUTO FADE TO [1]: %u/%d\n", ev[idx].val, val);
-            if ((val > -1) && (val < ev[idx].val)) {
-              PRINTF("-- AUTO FADE TO [2]: %u/%d\n", ev[idx].val, val);
+            if (val > -1) {
               ev[idx].val = val;
-              ev[idx].s = ((!val) ? LOW : ev[idx].s);
-              fade(idx);
+              ev[idx].o = ev[idx].s = ((!val) ? LOW : ev[idx].s);
+              /*
+              PRINTF("-- AUTO FADE TO: %u/%d - %u\n", ev[idx].val, val, (uint16_t) ev[idx].s);
+              */
               change(idx);
             }
         }
@@ -106,6 +120,7 @@ class NodeDimmer {
         }
         void change(uint8_t & idx) {
             fade(idx);
+            saveState(ev[idx].n, ev[idx].s);
             reportMsg(ev[idx].n, V_STATUS, static_cast<bool>(ev[idx].s));
             reportMsg(ev[idx].n, V_PERCENTAGE, ev[idx].val);
         }
@@ -154,31 +169,30 @@ class NodeDimmer {
             */
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
                 
-                if (!presentSend(ev[i].n, S_DIMMER))
+                if (!presentSend(ev[i].n, S_DIMMER, "Dimmer.Lights"))
                     return false;
                 if (!presentSend(ev[i].n, V_STATUS))
                     return false;
                 if (!presentSend(ev[i].n, V_PERCENTAGE))
                     return false;
             }
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-              isChange = true;
-            }
+            isChange = true;
             return true;
         }
         void data(uint16_t & cnt) {
 
-          if ((cnt % 70) == 0) {
-            for (uint8_t i = 0U; i < __NELE(ev); i++)
+          if ((cnt % 65) == 0) {
+            for (uint8_t i = 0U; i < __NELE(ev); i++) {
+              if (ev[i].e == LOW)
+                continue;
               fadeAuto(i);
+            }
           }
 
           if (!isChange)
             return;
           
-          ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-            isChange = false;
-          }
+          isChange = false;
 
           /*
           PRINTLN("-- NODE DIMMER | begin data");
@@ -190,11 +204,6 @@ class NodeDimmer {
 
             if (ev[i].s != ev[i].o) {
               ev[i].o = ev[i].s;
-
-              if (ev[i].s == HIGH)
-                ev[i].val = ((ev[i].val > 0) ? ev[i].val : 100);
-              else
-                ev[i].val = 0;
               change(i);
 
             } else if ((ev[i].s == LOW) && (ev[i].val > 0)) {
@@ -248,6 +257,7 @@ class NodeDimmer {
                   ev[idx].s = msg.getByte();
                   if (ev[idx].s == ev[idx].o)
                     return true;
+                  ev[idx].val = ((ev[idx].s) ? ((ev[idx].val > 0) ? ev[idx].val : 100) : 0);
                   break;
                 }
                 case V_PERCENTAGE: {
@@ -265,10 +275,8 @@ class NodeDimmer {
                   break;
                 }
             }
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-              ev[idx].e = HIGH;
-              isChange = true;
-            }
+            ev[idx].e = HIGH;
+            isChange = true;
             INFO_LED(ev[id].n);
             return true;
         }

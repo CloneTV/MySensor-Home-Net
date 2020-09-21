@@ -59,18 +59,21 @@ void presentTimer() {
 }
 
 static inline bool presentData(const uint8_t id, const mysensors_sensor_t data, const char *desc) {
+  wait(100);
   if (desc)
     return present(id, data, desc);
   else
     return present(id, data);
 }
 static inline bool presentData(const uint8_t id, const mysensors_data_t data, const char *desc) {
+  wait(100);
   if (desc)
     return request(id, data, desc);
   else
     return request(id, data);
 }
 static inline bool presentData(const char *name, const char *ver, __attribute__ (( __unused__ )) const char*) {
+  wait(100);
   return sendSketchInfo(name, ver);
 }
 

@@ -3,7 +3,14 @@
 
 /* ------- LIGHT LEVEL SENSOR ------- */
 
-const char PROGMEM btn_name[] = "Auto Lights";
+#  define CALIBRATE_MIN 0
+#  define CALIBRATE_MAX 900
+#  if defined(POLL_WAIT_SECONDS)
+#    undef POLL_WAIT_SECONDS
+#  endif
+#define POLL_WAIT_SECONDS 60U
+
+// const char PROGMEM btn_name[] = "Auto Lights";
 
 class NodeLiveLight {
 
@@ -20,10 +27,12 @@ class NodeLiveLight {
 
     private:
         bool isCalculate = true,
-             isChange = false;
-        int16_t val = 0U,
-                offset = 0U;
-        LIGHTS state = LIGHTS::None;
+             isChange = false,
+             isStart = true;
+        int16_t rawlight = 0,
+                offset = 0;
+        NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
+                              stsend = NodeLiveLight::LIGHTS::None;
         void calibrate() {
             int16_t v1 = 0, v2 = 0;
             while (millis() < 5000) {
@@ -43,40 +52,41 @@ class NodeLiveLight {
         uint8_t getLummId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_ILLUMINATION);
         }
+        uint16_t getLevel() {
+            return static_cast<uint16_t>(map(rawlight, CALIBRATE_MIN, CALIBRATE_MAX, 0, 100));
+        }
 
     public:
         void init(uint16_t) {}
         void init() {
             calibrate();
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isCalculate = static_cast<bool>(loadState(getAutoId()));
-            }
+            isCalculate = static_cast<bool>(loadState(getAutoId()));
         }
         NodeLiveLight::LIGHTS read() {
 
-            int16_t val_ = analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
-            val_ = ((val_ <= offset) ? val_ : (val_ - offset));
-            if (val_ == val)
-                return LIGHTS::None;
+            int16_t rawlight_ = analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
+            rawlight_ = ((rawlight_ <= offset) ? rawlight_ : (rawlight_ - offset));
+            if ((rawlight_ == rawlight) || (rawlight_ < 0))
+                return NodeLiveLight::LIGHTS::None;
+                
+            rawlight = rawlight_;
+                 if (rawlight <= 5)   state = NodeLiveLight::LIGHTS::None;
+            else if (rawlight <= 50)  state = NodeLiveLight::LIGHTS::Dark;
+            else if (rawlight <= 150) state = NodeLiveLight::LIGHTS::Gloomy;
+            else if (rawlight <= 300) state = NodeLiveLight::LIGHTS::Dim;
+            else if (rawlight <= 500) state = NodeLiveLight::LIGHTS::Light;
+            else if (rawlight <= 700) state = NodeLiveLight::LIGHTS::Bright;
+            else                      state = NodeLiveLight::LIGHTS::High;
 
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                val = val_;
-            }
-                 if (val <= 10)  state = LIGHTS::None;
-            else if (val <= 50)  state = LIGHTS::Dark;
-            else if (val <= 150) state = LIGHTS::Gloomy;
-            else if (val <= 300) state = LIGHTS::Dim;
-            else if (val <= 500) state = LIGHTS::Light;
-            else if (val <= 700) state = LIGHTS::Bright;
-            else                 state = LIGHTS::High;
-
-            PRINTF("-- LIGHT LEVEL SENSOR: %d/%d (%u)\n", val, offset, (uint16_t)state);
+            /*
+            PRINTF("-- LIGHT LEVEL: %d/%u/%d (%u|%u)\n", rawlight, getLevel(), offset, (uint16_t)state, (uint16_t)stsend);
+             */
         }
         int16_t getVal() {
-            return val;
+            return rawlight;
         }
         NodeLiveLight::LIGHTS getState() {
-            return ((isCalculate) ? state : LIGHTS::None);
+            return ((isCalculate) ? state : NodeLiveLight::LIGHTS::None);
         }
         bool presentation() {
           
@@ -89,29 +99,35 @@ class NodeLiveLight {
               return false;
             if (!presentSend(lid, V_LIGHT_LEVEL))
               return false;
-            if (!presentSend(aid, S_BINARY, btn_name))
+            if (!presentSend(aid, S_BINARY, "Auto.Lights"))
               return false;
             if (!presentSend(aid, V_STATUS))
               return false;
-            
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = true;
-            }
             return true;
         }
         void data(uint16_t & cnt) {
 
-            if ((cnt % 60) == 0) {
-                if (read() != LIGHTS::None)
-                    reportMsg(getLummId(), V_LIGHT_LEVEL, static_cast<uint16_t>(val));
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
+                (void) read();
+                if (stsend != state) {
+                    /*
+                    PRINTF("-- SEND LEVEL: %d/%u (%u|%u)\n", rawlight, getLevel(), (uint16_t)state, (uint16_t)stsend);
+                    */
+                    stsend = state;
+                    reportMsg(
+                        getLummId(),
+                        V_LIGHT_LEVEL,
+                        getLevel()
+                    );
+                }
+                if (isStart)
+                    isStart = false;
             }
 
             if (!isChange)
                 return;
             
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = false;
-            }
+            isChange = false;
             reportMsg(getAutoId(), V_STATUS, isCalculate);
         }
         bool data(const MyMessage & msg) {
@@ -122,13 +138,12 @@ class NodeLiveLight {
             if (isCalculate == msg.getBool())
                 return true;
 
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isCalculate = msg.getBool();
-                isChange = true;
-            }
+            isCalculate = msg.getBool();
+            isChange = true;
             saveState(msg.sensor, isCalculate);
             return isChange;
         }
 };
 
+#  undef POLL_WAIT_SECONDS
 #endif

@@ -4,26 +4,29 @@
 
 /* ------- RADIO RSSI LEVEL ------- */
 
+#  if defined(POLL_WAIT_SECONDS)
+#    undef POLL_WAIT_SECONDS
+#  endif
+#define POLL_WAIT_SECONDS 90U
+
 class NodeLiveRssi {
     private:
-        bool isChange = false;
+        bool isStart = true;
         int16_t rssi = 0;
         bool radioQuality() {
+            int16_t r_;
 #           if defined(MY_GATEWAY_ESP8266)
-                int16_t r_ = static_cast<int16_t>(WiFi.RSSI());
+                r_ = static_cast<int16_t>(WiFi.RSSI());
 #           elif defined(MY_RADIO_RF24)
-                int16_t r_ = transportGetSendingRSSI();
+                r_ = transportGetSendingRSSI();
 #           else
-                int16_t r_ = 0;
                 return false;
 #           endif
             
             r_ = map(r_, -85, -40, 0, 100);
             r_ = ((r_ < 0) ? 0 : ((r_ > 100) ? 100 : r_));
             if (rssi != r_) {
-              ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                rssi = r_;
-              }
+              rssi = r_;
               return true;
             }
             return false;
@@ -36,29 +39,26 @@ class NodeLiveRssi {
         void init(uint16_t) {}
         void init() {}
         bool presentation() {
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = true;
-            }
+
+            uint8_t id = getId();
+            if (!presentSend(id, S_SOUND, "RSSI"))
+              return false;
+            if (!presentSend(id, V_LEVEL))
+              return false;
             return true;
         }
         void data(uint16_t & cnt) {
-            if (((cnt % 90) == 0) || (isChange)) {
-                ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                    isChange = false;
-                }
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
                 if (radioQuality())
-                    reportMsg(getId(), I_SIGNAL_REPORT_RESPONSE, static_cast<uint16_t>(rssi));
+                    reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
+                if (isStart)
+                    isStart = false;
             }
         }
         bool data(const MyMessage & msg) {
-            if ((msg.sensor != getId()) || (msg.type != I_SIGNAL_REPORT_REQUEST))
-                return false;
-            
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = true;
-            }
-            return isChange;
+            return false;
         }
 };
 
+#  undef POLL_WAIT_SECONDS
 #endif

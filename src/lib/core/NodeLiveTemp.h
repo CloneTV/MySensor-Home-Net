@@ -4,8 +4,14 @@
 
 /* ------- BUILD-IN TEMP SENSOR ------- */
 
+#  if defined(POLL_WAIT_SECONDS)
+#    undef POLL_WAIT_SECONDS
+#  endif
+#define POLL_WAIT_SECONDS 60U
+
 class NodeLiveTemp {
     private:
+        bool isStart = true;
         int8_t temp = 0;
         bool chipTemperature() {
             int8_t t_ = hwCPUTemperature();
@@ -24,15 +30,18 @@ class NodeLiveTemp {
             /*
               PRINTLN("NODE TEMP | presentation");
             */
-            if (!presentSend(getId(), S_TEMP))
+            if (!presentSend(getId(), S_TEMP, "Int.Temp"))
               return false;
+            
             return true;
         }
         void data(uint16_t & cnt) {
 
-            if ((cnt % 60) == 0) {
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
                 if (chipTemperature())
                     reportMsg(getId(), V_TEMP, temp);
+                if (isStart)
+                    isStart = false;
             }
         }
         bool data(const MyMessage & msg) {
@@ -40,4 +49,5 @@ class NodeLiveTemp {
         }
 };
 
+#  undef POLL_WAIT_SECONDS
 #endif

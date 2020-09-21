@@ -4,9 +4,14 @@
 
 /* ------- BUILD-IN BATTERY CHARGE LEVEL ------- */
 
+#  if defined(POLL_WAIT_SECONDS)
+#    undef POLL_WAIT_SECONDS
+#  endif
+#define POLL_WAIT_SECONDS 90U
+
 class NodeLiveBat {
     private:
-        bool isChange = false;
+        bool isStart = true;
         uint8_t volt = 0U;
         bool chipVoltage() {
 #           if defined(MY_GATEWAY_ESP8266)
@@ -17,9 +22,7 @@ class NodeLiveBat {
 
             v_ = ((v_ < 0) ? 0 : ((v_ > 100) ? 100 : v_));
             if (volt != v_) {
-              ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                volt = static_cast<uint8_t>(v_);
-              }
+              volt = static_cast<uint8_t>(v_);
               return true;
             }
             return false;
@@ -40,31 +43,20 @@ class NodeLiveBat {
 #           endif
         }
         bool presentation() {
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = true;
-            }
-            return isChange;
+            return true;
         }
         void data(uint16_t & cnt) {
-            if (((cnt % 90) == 0) || (isChange)) {
-                ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                    isChange = false;
-                }
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
                 if (chipVoltage())
                     sendBatteryLevel(volt, false);
+                if (isStart)
+                    isStart = false;
             }
         }
         bool data(const MyMessage & msg) {
-            if ((msg.sensor != getId()) ||
-                ((msg.type != I_BATTERY_LEVEL) &&
-                 (msg.type != V_VOLTAGE)))
-                return false;
-
-            ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-                isChange = true;
-            }
-            return isChange;
+            return false;
         }
 };
 
+#  undef POLL_WAIT_SECONDS
 #endif
