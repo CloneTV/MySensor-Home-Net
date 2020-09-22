@@ -40,14 +40,14 @@ class NodeRelayButton {
 
 #    elif (LIGHT_SENSOR_BTN == 2)
         EventRelayButton ev[2] = {
-          { 0U, 8U, 5U, 0U, 0U },
-          { 1U, 7U, 6U, 0U, 0U }
+          { 0U, 8U, 6U, 0U, 0U },
+          { 1U, 7U, 5U, 0U, 0U }
         };
 
 #    elif (LIGHT_SENSOR_BTN == 3)
         EventRelayButton ev[3] = {
-          { 0U, 8U, 5U, 0U, 0U },
-          { 1U, 7U, 6U, 0U, 0U },
+          { 0U, 8U, 6U, 0U, 0U },
+          { 1U, 7U, 5U, 0U, 0U },
           { 2U, 4U, 3U, 0U, 0U }
         };
 
