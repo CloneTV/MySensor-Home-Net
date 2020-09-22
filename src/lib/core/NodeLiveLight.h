@@ -35,6 +35,7 @@ class NodeLiveLight {
                               stsend = NodeLiveLight::LIGHTS::None;
         void calibrate() {
             int16_t v1 = 0, v2 = 0;
+            (void) analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
             while (millis() < 5000) {
                 wait(100);
                 int16_t v = analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
