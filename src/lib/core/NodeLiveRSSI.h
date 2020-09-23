@@ -8,6 +8,7 @@
 #    undef POLL_WAIT_SECONDS
 #  endif
 #define POLL_WAIT_SECONDS 182U
+#define MYCONTROLLER_ENGINE 1 /* https://www.mycontroller.org/ */
 
 class NodeLiveRssi {
     private:
@@ -40,17 +41,29 @@ class NodeLiveRssi {
         void init() {}
         bool presentation() {
 
+#           if !defined(MYCONTROLLER_ENGINE)
             uint8_t id = getId();
             if (!presentSend(id, S_SOUND, "RSSI"))
               return false;
             if (!presentSend(id, V_LEVEL))
               return false;
+#           endif
             return true;
         }
         void data(uint16_t & cnt) {
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
-                if (radioQuality())
+                if (radioQuality()) {
+#                   if !defined(MYCONTROLLER_ENGINE)
                     reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
+#                   else
+                    MY_CRITICAL_SECTION {
+                        char *buff = new char[18]{};
+                        (void) snprintf(buff, 17, "rssi:%d", rssi);
+                        reportMsg(getId(), V_VAR5, buff);
+                        delete [] buff;
+                    }
+#                   endif
+                }
                 if (isStart)
                     isStart = false;
             }

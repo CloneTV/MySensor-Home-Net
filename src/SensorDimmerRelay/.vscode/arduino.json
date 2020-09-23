@@ -1,5 +1,5 @@
 {
-    "sketch": "SensorDimmerLed.ino",
+    "sketch": "SensorDimmerRelay.ino",
     "port": "COM11",
     "board": "arduino:avr:MYSBL",
     "output": "../build",
