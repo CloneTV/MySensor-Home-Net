@@ -34,9 +34,11 @@
 /src/build
 /src/Gateway/config.h
 /src/Gateway/data/*.crt
+/src/Gateway/core/*.h
 /src/Firmware/MYSBootloader/.vs
 /src/Firmware/MYSBootloader/build.cmd
+/src/SensorDimmer/core/*.h
+/src/SensorDimmerRelay/core/*.h
 /src/SensorFake/core/*.h
 /src/SensorReley/core/*.h
 /src/SensorReleyButton/core/*.h
-/src/SensorDimmerLed/core/*.h
