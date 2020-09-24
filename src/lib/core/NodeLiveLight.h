@@ -33,6 +33,10 @@ class NodeLiveLight {
                 offset = 0;
         NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
                               stsend = NodeLiveLight::LIGHTS::None;
+        uint16_t baselight[6] = {
+            5U, 50U, 150U,
+            300U, 500U, 700U
+        };
         void calibrate() {
             int16_t v1 = 0, v2 = 0;
             (void) analogRead(INTERNAL_LIVE_ILLUMINATION_PIN);
@@ -49,6 +53,9 @@ class NodeLiveLight {
         }
         uint8_t getAutoId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_AUTO_LIGHT);
+        }
+        uint8_t getAutoSetupId() {
+            return static_cast<uint8_t>(INTERNAL_LIVE_AUTO_LIGHT_SETUP);
         }
         uint8_t getLummId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_ILLUMINATION);
@@ -71,13 +78,13 @@ class NodeLiveLight {
                 return NodeLiveLight::LIGHTS::None;
                 
             rawlight = rawlight_;
-                 if (rawlight <= 5)   state = NodeLiveLight::LIGHTS::None;
-            else if (rawlight <= 50)  state = NodeLiveLight::LIGHTS::Dark;
-            else if (rawlight <= 150) state = NodeLiveLight::LIGHTS::Gloomy;
-            else if (rawlight <= 300) state = NodeLiveLight::LIGHTS::Dim;
-            else if (rawlight <= 500) state = NodeLiveLight::LIGHTS::Light;
-            else if (rawlight <= 700) state = NodeLiveLight::LIGHTS::Bright;
-            else                      state = NodeLiveLight::LIGHTS::High;
+                 if (rawlight <= baselight[0]) state = NodeLiveLight::LIGHTS::None;
+            else if (rawlight <= baselight[1]) state = NodeLiveLight::LIGHTS::Dark;
+            else if (rawlight <= baselight[2]) state = NodeLiveLight::LIGHTS::Gloomy;
+            else if (rawlight <= baselight[3]) state = NodeLiveLight::LIGHTS::Dim;
+            else if (rawlight <= baselight[4]) state = NodeLiveLight::LIGHTS::Light;
+            else if (rawlight <= baselight[5]) state = NodeLiveLight::LIGHTS::Bright;
+            else                               state = NodeLiveLight::LIGHTS::High;
 
             /*
             PRINTF("-- LIGHT LEVEL: %d/%u/%d (%u|%u)\n", rawlight, getLevel(), offset, (uint16_t)state, (uint16_t)stsend);
@@ -95,6 +102,7 @@ class NodeLiveLight {
             PRINTLN("NODE LIGHTS | presentation");
             */
             uint8_t aid = getAutoId(),
+                    sid = getAutoSetupId(),
                     lid = getLummId();
             if (!presentSend(lid, S_LIGHT_LEVEL))
               return false;
@@ -103,6 +111,10 @@ class NodeLiveLight {
             if (!presentSend(aid, S_BINARY, "Auto.Lights"))
               return false;
             if (!presentSend(aid, V_STATUS))
+              return false;
+            if (!presentSend(aid, S_CUSTOM, "Setup.Auto.Lights"))
+              return false;
+            if (!presentSend(aid, V_CUSTOM))
               return false;
             return true;
         }
@@ -133,16 +145,39 @@ class NodeLiveLight {
         }
         bool data(const MyMessage & msg) {
             
-            if ((msg.sensor != getAutoId()) || (msg.type != V_STATUS))
-                return false;
-
-            if (isCalculate == msg.getBool())
-                return true;
-
-            isCalculate = msg.getBool();
-            isChange = true;
-            saveState(msg.sensor, isCalculate);
-            return isChange;
+            switch (msg.getType()) {
+                case V_STATUS: {
+                    if (msg.sensor != getAutoId())
+                        return false;
+                    if (isCalculate == msg.getBool())
+                        break;
+                    
+                    isCalculate = msg.getBool();
+                    isChange = true;
+                    saveState(msg.sensor, isCalculate);
+                    break;
+                }
+                case V_CUSTOM: {
+                    if (msg.sensor != getAutoSetupId())
+                        return false;
+                    
+                    String s = String(msg.getString());
+                    for (
+                        uint16_t i = 0U, pos = 0U, idx = 0U;
+                        ((i < s.length()) && (idx < __NELE(baselight)));
+                        i++) {
+                        if ((s.charAt(i) == ';') || (s.charAt(i) == '|')) {
+                            baselight[idx] = static_cast<uint16_t>(s.substring(pos, i).toInt());
+                            pos = (i + 1);
+                            idx++;
+                        }
+                    }
+                    break;
+                }
+                default:
+                    return false;
+            }
+            return true;
         }
 };
 

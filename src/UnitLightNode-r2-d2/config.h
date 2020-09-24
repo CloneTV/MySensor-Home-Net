@@ -1,8 +1,10 @@
 
+/// UnitLightNode - RELAY 2, DIMMERS 2 
+
 #define MY_NODE_ID 22
 #define MY_PARENT_NODE_ID 0
 #define MY_PARENT_NODE_IS_STATIC
-#define MY_HOSTNAME "sensor-Dimmer-2-Reley-2"
+#define MY_HOSTNAME "Unit-LightNode-r2-d2"
 #define MY_VERSION "1.2"
 ///
 #define NO_DEBUG 1

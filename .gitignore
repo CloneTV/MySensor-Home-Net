@@ -37,6 +37,7 @@
 /src/Gateway/core/*.h
 /src/Firmware/MYSBootloader/.vs
 /src/Firmware/MYSBootloader/build.cmd
+/src/UnitLightNode-r2-d2/core/*.h
 /src/SensorDimmer/core/*.h
 /src/SensorDimmerRelay/core/*.h
 /src/SensorFake/core/*.h

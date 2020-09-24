@@ -129,6 +129,9 @@
 #  if !defined(INTERNAL_LIVE_VOLT_PIN)
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
+#  if !defined(INTERNAL_LIVE_AUTO_LIGHT_SETUP)
+#    define INTERNAL_LIVE_AUTO_LIGHT_SETUP 249
+#  endif
 #  if !defined(INTERNAL_LIVE_AUTO_LIGHT)
 #    define INTERNAL_LIVE_AUTO_LIGHT 250
 #  endif
