@@ -11,7 +11,7 @@
 
 class NodeLiveTemp {
     private:
-        bool isStart = true;
+        bool isAction = true;
         int8_t temp = 0;
         bool chipTemperature() {
             int8_t t_ = hwCPUTemperature();
@@ -37,11 +37,11 @@ class NodeLiveTemp {
         }
         void data(uint16_t & cnt) {
 
-            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipTemperature())
                     reportMsg(getId(), V_TEMP, temp);
-                if (isStart)
-                    isStart = false;
+                if (isAction)
+                    isAction = false;
             }
         }
         bool data(const MyMessage & msg) {

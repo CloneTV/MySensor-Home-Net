@@ -11,7 +11,7 @@
 
 class NodeLiveBat {
     private:
-        bool isStart = true;
+        bool isAction = true;
         uint8_t volt = 0U;
         bool chipVoltage() {
 #           if defined(MY_GATEWAY_ESP8266)
@@ -46,11 +46,11 @@ class NodeLiveBat {
             return true;
         }
         void data(uint16_t & cnt) {
-            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipVoltage())
                     sendBatteryLevel(volt, false);
-                if (isStart)
-                    isStart = false;
+                if (isAction)
+                    isAction = false;
             }
         }
         bool data(const MyMessage & msg) {

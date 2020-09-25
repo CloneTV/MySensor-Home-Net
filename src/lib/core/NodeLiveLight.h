@@ -10,7 +10,10 @@
 #  endif
 #define POLL_WAIT_SECONDS 60U
 
-// const char PROGMEM btn_name[] = "Auto Lights";
+#define IDX_Calculate 0
+#define IDX_Change    1
+#define IDX_Start     2
+#define IDX_Setup     3
 
 class NodeLiveLight {
 
@@ -26,9 +29,12 @@ class NodeLiveLight {
         };
 
     private:
-        bool isCalculate = true,
-             isChange = true,
-             isStart = true;
+        bool isAction[4] = {
+            true,   // is Calculate (IDX_Calculate)
+            true,   // is Change    (IDX_Change)
+            true,   // is Start     (IDX_Start)
+            false   // is Setup     (IDX_Setup)
+        };
         int16_t rawlight = 0,
                 offset = 0;
         NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
@@ -68,7 +74,7 @@ class NodeLiveLight {
         void init(uint16_t) {}
         void init() {
             calibrate();
-            isCalculate = static_cast<bool>(loadState(getAutoId()));
+            isAction[IDX_Calculate] = static_cast<bool>(loadState(getAutoId()));
         }
         NodeLiveLight::LIGHTS read() {
 
@@ -94,7 +100,7 @@ class NodeLiveLight {
             return rawlight;
         }
         NodeLiveLight::LIGHTS getState() {
-            return ((isCalculate) ? state : NodeLiveLight::LIGHTS::None);
+            return ((isAction[IDX_Calculate]) ? state : NodeLiveLight::LIGHTS::None);
         }
         bool presentation() {
           
@@ -112,15 +118,15 @@ class NodeLiveLight {
               return false;
             if (!presentSend(aid, V_STATUS))
               return false;
-            if (!presentSend(aid, S_CUSTOM, "Setup.Auto.Lights"))
+            if (!presentSend(sid, S_CUSTOM, "Setup.Auto.Lights"))
               return false;
-            if (!presentSend(aid, V_CUSTOM))
+            if (!presentSend(sid, V_CUSTOM))
               return false;
             return true;
         }
         void data(uint16_t & cnt) {
 
-            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction[IDX_Start])) {
                 (void) read();
                 if (stsend != state) {
                     /*
@@ -133,15 +139,21 @@ class NodeLiveLight {
                         getLevel()
                     );
                 }
-                if (isStart)
-                    isStart = false;
+                if (isAction[IDX_Start])
+                    isAction[IDX_Start] = false;
             }
-
-            if (!isChange)
-                return;
-            
-            isChange = false;
-            reportMsg(getAutoId(), V_STATUS, isCalculate);
+            if (isAction[IDX_Setup]) {
+                isAction[IDX_Setup] = false;
+                String sdata = "{\"data\":[";
+                for (uint16_t i = 0U; i < __NELE(baselight); i++)
+                    sdata += "," + baselight[i];
+                sdata += "]}";
+                reportMsg(getAutoSetupId(), V_CUSTOM, sdata.c_str());
+            }
+            if (isAction[IDX_Change]) {
+                isAction[IDX_Change] = false;
+                reportMsg(getAutoId(), V_STATUS, static_cast<bool>(isAction[IDX_Calculate]));
+            }
         }
         bool data(const MyMessage & msg) {
             
@@ -149,12 +161,12 @@ class NodeLiveLight {
                 case V_STATUS: {
                     if (msg.sensor != getAutoId())
                         return false;
-                    if (isCalculate == msg.getBool())
+                    if (isAction[IDX_Calculate] == msg.getBool())
                         break;
                     
-                    isCalculate = msg.getBool();
-                    isChange = true;
-                    saveState(msg.sensor, isCalculate);
+                    isAction[IDX_Calculate] = msg.getBool();
+                    isAction[IDX_Change] = true;
+                    saveState(msg.sensor, static_cast<uint8_t>(isAction[IDX_Calculate]));
                     break;
                 }
                 case V_CUSTOM: {
@@ -172,6 +184,7 @@ class NodeLiveLight {
                             idx++;
                         }
                     }
+                    isAction[IDX_Setup] = true;
                     break;
                 }
                 default:

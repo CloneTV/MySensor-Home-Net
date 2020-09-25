@@ -12,7 +12,7 @@
 
 class NodeLiveRssi {
     private:
-        bool isStart = true;
+        bool isAction = true;
         int16_t rssi = 0;
         bool radioQuality() {
             int16_t r_;
@@ -51,21 +51,17 @@ class NodeLiveRssi {
             return true;
         }
         void data(uint16_t & cnt) {
-            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isStart)) {
+            if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (radioQuality()) {
 #                   if !defined(MYCONTROLLER_ENGINE)
                     reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
 #                   else
-                    MY_CRITICAL_SECTION {
-                        char *buff = new char[18]{};
-                        (void) snprintf(buff, 17, "rssi:%d", rssi);
-                        reportMsg(getId(), V_VAR5, buff);
-                        delete [] buff;
-                    }
+                    String s = "rssi:" + rssi;
+                    reportMsg(getId(), V_VAR5, s.c_str());
 #                   endif
                 }
-                if (isStart)
-                    isStart = false;
+                if (isAction)
+                    isAction = false;
             }
         }
         bool data(const MyMessage & msg) {
