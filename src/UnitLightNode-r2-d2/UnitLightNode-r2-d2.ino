@@ -3,11 +3,13 @@
 
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;
-SensorInterface<NodeRelay>    nrelay = SensorInterface<NodeRelay>(new NodeRelay(clsLight));
-SensorInterface<NodeDimmer>   ndimm  = SensorInterface<NodeDimmer>(new NodeDimmer(clsLight));
-SensorInterface<NodeLiveTemp> nltemp = SensorInterface<NodeLiveTemp>(new NodeLiveTemp());
-SensorInterface<NodeLiveBat>  nlbat  = SensorInterface<NodeLiveBat>(new NodeLiveBat());
-SensorInterface<NodeLiveRssi> nlrssi = SensorInterface<NodeLiveRssi>(new NodeLiveRssi());
+NodeLiveTemp  nltemp = NodeLiveTemp();
+NodeLiveBat   nlbat  = NodeLiveBat();
+NodeLiveRssi  nlrssi = NodeLiveRssi();
+NodeLiveMem   nlmem  = NodeLiveMem();
+NodeLiveLight nlight = NodeLiveLight();
+NodeRelay     nrelay = NodeRelay(&nlight);
+NodeDimmer    ndimm  = NodeDimmer(&nlight);
 
 void setup() {}
 void before() {
@@ -15,13 +17,14 @@ void before() {
   PRINTINIT();
   PRINTBUILD();
 
-  nltemp.init();
+  nlight.init();
   ndimm.init();
   nrelay.init();
+  nltemp.init();
   nlbat.init();
   nlrssi.init();
-  clsLight->init();
-
+  nlmem.init();
+  
   INFO_LED(1);
 }
 bool presentationStep(uint8_t idx) {
@@ -47,7 +50,7 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 5U: {
-      if (!clsLight->presentation())
+      if (!nlight.presentation())
         return false;
       break;
     }
@@ -61,6 +64,11 @@ bool presentationStep(uint8_t idx) {
         return false;
       break;
     }
+    case 8U: {
+      if (!nlmem.presentation())
+        return false;
+      break;
+    }
     default: {
       PRINTLN("-- Wrong number ID\n");
       return false;
@@ -71,7 +79,7 @@ bool presentationStep(uint8_t idx) {
 void presentation() {
   if (presentStatus == SENSOR_ID_NONE)
     return;
-  while (presentStatus <= 7U) {
+  while (presentStatus <= 8U) {
     if (!presentationStep(presentStatus))
       return;
     presentStatus++;
@@ -87,12 +95,13 @@ void loop() {
 
   } else if (isTransportReady()) {
     
-    clsLight->data(cnt);
+    nlight.data(cnt);
     ndimm.data(cnt);
     nrelay.data(cnt);
     nltemp.data(cnt);
     nlbat.data(cnt);
     nlrssi.data(cnt);
+    nlmem.data(cnt);
 
     cnt++;
     if (cnt >= 60000U)
@@ -113,7 +122,7 @@ void receive(const MyMessage & msg) {
   PRINTLN("GW | receive");
    */
   
-  if (clsLight->data(msg))
+  if (nlight.data(msg))
     return;
   if (nrelay.data(msg))
     return;
@@ -122,6 +131,8 @@ void receive(const MyMessage & msg) {
   if (nltemp.data(msg))
     return;
   if (nlbat.data(msg))
+    return;
+  if (nlmem.data(msg))
     return;
   
   (void) nlrssi.data(msg);

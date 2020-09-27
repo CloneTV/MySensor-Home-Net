@@ -27,7 +27,7 @@ struct EventRelayButton {
 #    pragma message "WARNING - you configuration don't support 'AC/DC relays buttons' AND 'AC/DC relays', pins intersect! Disable either one or the other, or edit the pin tables"
 #  endif 
 
-class NodeRelayButton {
+class NodeRelayButton : public SensorInterface<NodeRelayButton> {
     private:
         bool isChange = true;
         NodeLiveLight const *light;
@@ -57,7 +57,7 @@ class NodeRelayButton {
 #    endif
 #  endif
         void AutoOff(uint8_t & idx) {
-            if (ev[idx].s == LOW)
+            if ((ev[idx].s == LOW) || (light == nullptr))
               return;
             
             switch(light->getState()) {
@@ -79,6 +79,7 @@ class NodeRelayButton {
     
     public:
         NodeRelayButton () {
+          light = nullptr;
         }
         NodeRelayButton(NodeLiveLight const *l) {
           light = l;
@@ -88,8 +89,7 @@ class NodeRelayButton {
             delete ev[i].b;
           }
         }
-        void init(uint16_t) {}
-        void init() {
+        void go_init() {
 
           MY_CRITICAL_SECTION {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -122,7 +122,7 @@ class NodeRelayButton {
             }
           }
         }
-        bool presentation() {
+        bool go_presentation() {
           
           /*
           PRINTLN("NODE RELAY BUTTON | presentation");
@@ -136,7 +136,7 @@ class NodeRelayButton {
           }
           return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
 
           for (uint8_t i = 0U; i < __NELE(ev); i++) {
 
@@ -180,7 +180,7 @@ class NodeRelayButton {
             INFO_LED(i);
           }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(const MyMessage & msg) {
 
           uint8_t idx;
           switch (msg.getType()) {

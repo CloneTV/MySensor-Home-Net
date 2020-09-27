@@ -129,6 +129,9 @@
 #  if !defined(INTERNAL_LIVE_VOLT_PIN)
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
+#  if !defined(INTERNAL_LIVE_AUTO_FREE_MEM)
+#    define INTERNAL_LIVE_AUTO_FREE_MEM 248
+#  endif
 #  if !defined(INTERNAL_LIVE_AUTO_LIGHT_SETUP)
 #    define INTERNAL_LIVE_AUTO_LIGHT_SETUP 249
 #  endif
@@ -174,9 +177,11 @@ const PROGMEM char * const str_firmware[] = {
 
 #include <Wire.h>
 #include <MySensors.h>
-#include "NodeSensors.h"
-#include "PwmHw.h"
+#include "NodeOptionsPWM.h"
+#include "NodeOptionsUtil.h"
+#include "NodeInterface.h"
 #include "NodeLiveLight.h"
+#include "NodeLiveMem.h"
 
 /* ------- ENABLE/DISABLE BLOCK ------- */
 
@@ -196,22 +201,17 @@ const PROGMEM char * const str_firmware[] = {
 #   endif
 #   if (INTERNAL_LIVE_ILLUMINATION_PIN >= 0)
 #     define ENABLE_LIVE_SENSOR_ILLUMINATION 1
-      NodeLiveLight nllight__ = NodeLiveLight(), *clsLight = &nllight__;
-#   else
-      NodeLiveLight *clsLight = nullptr;
 #   endif
 #   if (LIGHT_SENSOR > 0)
 #     define ENABLE_SENSOR_RELAY 1
-#     include "NodeRelay.h"
+#     include "NodeActionRelay.h"
 #   elif (LIGHT_SENSOR_BTN > 0)
 #     define ENABLE_SENSOR_RELAY_BTN 1
-#     include "NodeRelayButton.h"
+#     include "NodeActionRelayButton.h"
 #   endif
 #   if (DIMMER_SENSOR > 0)
 #     define ENABLE_SENSOR_DIMMER 1
-#     include "NodeDimmer.h"
+#     include "NodeActionDimmer.h"
 #   endif
-
-#include "SensorInterface.h"
 
 #endif

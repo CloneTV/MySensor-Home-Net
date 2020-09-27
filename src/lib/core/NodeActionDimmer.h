@@ -14,7 +14,6 @@
     else                                      \
       val = B
 
-
 /*
     EventSensor.n = sensor id
     EventSensor.p = sensor pin
@@ -31,7 +30,7 @@ typedef struct _EventDimmer {
 
 /* ------- DIMMER_SENSOR ------- */
 
-class NodeDimmer {
+class NodeDimmer : public SensorInterface<NodeDimmer> {
 
     private:
         bool isChange = true;
@@ -62,6 +61,9 @@ class NodeDimmer {
 #    endif
 #  endif
         void fadeAuto(uint8_t & idx) {
+            
+            if ((ev[idx].s == LOW) || (light == nullptr))
+              return;
 
             int16_t val = -1;
             
@@ -129,12 +131,12 @@ class NodeDimmer {
    
     public:
         NodeDimmer() {
+          light = nullptr;
         }
         NodeDimmer(NodeLiveLight const *l) {
           light = l;
         }
-        void init(uint16_t) {}
-        void init() {
+        void go_init() {
 
           MY_CRITICAL_SECTION {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -164,7 +166,7 @@ class NodeDimmer {
             }
           }
         }
-        bool presentation() {
+        bool go_presentation() {
 
             /*
             PRINTLN("NODE DIMMER | presentation");
@@ -180,7 +182,7 @@ class NodeDimmer {
             }
             return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
 
           if ((cnt % 65) == 0) {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -232,7 +234,7 @@ class NodeDimmer {
             INFO_LED(i);
           }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(const MyMessage & msg) {
 
             uint8_t idx;
             switch (msg.getType()) {

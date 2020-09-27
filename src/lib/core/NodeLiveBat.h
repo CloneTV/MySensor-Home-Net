@@ -9,7 +9,7 @@
 #  endif
 #define POLL_WAIT_SECONDS 181U
 
-class NodeLiveBat {
+class NodeLiveBat : public SensorInterface<NodeLiveBat> {
     private:
         bool isAction = true;
         uint8_t volt = 0U;
@@ -32,8 +32,7 @@ class NodeLiveBat {
         }
 
     public:
-        void init(uint16_t) {}
-        void init() {
+        void go_init() {
 #           if defined(MY_GATEWAY_ESP8266)
                 ADC_MODE(ADC_VCC);
 #           elif defined(__AVR_ATmega2560__)
@@ -42,10 +41,10 @@ class NodeLiveBat {
                 analogReference(INTERNAL);
 #           endif
         }
-        bool presentation() {
+        bool go_presentation() {
             return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipVoltage())
                     sendBatteryLevel(volt, false);
@@ -53,7 +52,7 @@ class NodeLiveBat {
                     isAction = false;
             }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(__attribute__ (( __unused__ )) const MyMessage & msg) {
             return false;
         }
 };

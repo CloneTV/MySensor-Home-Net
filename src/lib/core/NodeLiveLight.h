@@ -15,7 +15,7 @@
 #define IDX_Start     2
 #define IDX_Setup     3
 
-class NodeLiveLight {
+class NodeLiveLight : public SensorInterface<NodeLiveLight> {
 
     public:
         enum LIGHTS {
@@ -39,9 +39,15 @@ class NodeLiveLight {
                 offset = 0;
         NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
                               stsend = NodeLiveLight::LIGHTS::None;
+        /*
         uint16_t baselight[6] = {
             5U, 50U, 150U,
             300U, 500U, 700U
+        };
+        */
+        uint16_t baselight[6] = {
+            2U, 5U, 10U,
+            15U, 25U, 35U
         };
         void calibrate() {
             int16_t v1 = 0, v2 = 0;
@@ -71,8 +77,7 @@ class NodeLiveLight {
         }
 
     public:
-        void init(uint16_t) {}
-        void init() {
+        void go_init() {
             calibrate();
             isAction[IDX_Calculate] = static_cast<bool>(loadState(getAutoId()));
         }
@@ -102,7 +107,7 @@ class NodeLiveLight {
         NodeLiveLight::LIGHTS getState() {
             return ((isAction[IDX_Calculate]) ? state : NodeLiveLight::LIGHTS::None);
         }
-        bool presentation() {
+        bool go_presentation() {
           
             /*
             PRINTLN("NODE LIGHTS | presentation");
@@ -124,7 +129,7 @@ class NodeLiveLight {
               return false;
             return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
 
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction[IDX_Start])) {
                 (void) read();
@@ -144,10 +149,14 @@ class NodeLiveLight {
             }
             if (isAction[IDX_Setup]) {
                 isAction[IDX_Setup] = false;
-                String sdata = "{\"data\":[";
-                for (uint16_t i = 0U; i < __NELE(baselight); i++)
-                    sdata += "," + baselight[i];
-                sdata += "]}";
+                String sdata = String("{\"data\":[");
+                for (uint16_t i = 0U; i < __NELE(baselight); i++) {
+                    sdata.concat(baselight[i]);
+                    if (i < (__NELE(baselight) - 1U)) {
+                        sdata.concat(",");
+                    }
+                }
+                sdata.concat("]}");
                 reportMsg(getAutoSetupId(), V_CUSTOM, sdata.c_str());
             }
             if (isAction[IDX_Change]) {
@@ -155,7 +164,7 @@ class NodeLiveLight {
                 reportMsg(getAutoId(), V_STATUS, static_cast<bool>(isAction[IDX_Calculate]));
             }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(const MyMessage & msg) {
             
             switch (msg.getType()) {
                 case V_STATUS: {
@@ -178,10 +187,11 @@ class NodeLiveLight {
                         uint16_t i = 0U, pos = 0U, idx = 0U;
                         ((i < s.length()) && (idx < __NELE(baselight)));
                         i++) {
-                        if ((s.charAt(i) == ';') || (s.charAt(i) == '|')) {
+                        const char c = s.charAt(i);
+                        if ((c == ';') || (c == ',') || (c == '|')) {
                             String ss = s.substring(pos, i);
                             if (ss.length() > 0) {
-                                int16_t n = static_cast<int16_t>(ss.toInt());
+                                const int16_t n = static_cast<int16_t>(ss.toInt());
                                 if (n > 0)
                                     baselight[idx++] = static_cast<uint16_t>(n);
                             }

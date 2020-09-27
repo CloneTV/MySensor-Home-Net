@@ -15,7 +15,7 @@ struct EventRelay {
 
 /* ------- LIGHT ON/OFF SENSOR ------- */
 
-class NodeRelay {
+class NodeRelay : public SensorInterface<NodeRelay> {
     private:
         bool isChange = true;
         NodeLiveLight const *light;
@@ -45,7 +45,7 @@ class NodeRelay {
 #    endif
 #  endif
         void AutoOff(uint8_t & idx) {
-            if (ev[idx].s == LOW)
+            if ((ev[idx].s == LOW) || (light == nullptr))
               return;
             
             switch(light->getState()) {
@@ -67,12 +67,12 @@ class NodeRelay {
     
     public:
         NodeRelay () {
+          light = nullptr;
         }
         NodeRelay(NodeLiveLight const *l) {
           light = l;
         }
-        void init(uint16_t) {}
-        void init() {
+        void go_init() {
 
           MY_CRITICAL_SECTION {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -97,7 +97,7 @@ class NodeRelay {
             }
           }
         }
-        bool presentation() {
+        bool go_presentation() {
           
           /*
           PRINTLN("NODE RELAY | presentation");
@@ -111,7 +111,7 @@ class NodeRelay {
           }
           return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
 
           if ((cnt % 70) == 0) {
             for (uint8_t i = 0U; i < __NELE(ev); i++)
@@ -143,7 +143,7 @@ class NodeRelay {
             INFO_LED(i);
           }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(const MyMessage & msg) {
 
           uint8_t idx;
           switch (msg.getType()) {

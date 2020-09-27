@@ -9,7 +9,7 @@
 #  endif
 #define POLL_WAIT_SECONDS 183U
 
-class NodeLiveTemp {
+class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
     private:
         bool isAction = true;
         int8_t temp = 0;
@@ -24,9 +24,8 @@ class NodeLiveTemp {
         }
 
     public:
-        void init(uint16_t) {}
-        void init() {}
-        bool presentation() {
+        void go_init() {}
+        bool go_presentation() {
             /*
               PRINTLN("NODE TEMP | presentation");
             */
@@ -35,7 +34,7 @@ class NodeLiveTemp {
             
             return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
 
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipTemperature())
@@ -44,7 +43,7 @@ class NodeLiveTemp {
                     isAction = false;
             }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(__attribute__ (( __unused__ )) const MyMessage & msg) {
             return false;
         }
 };

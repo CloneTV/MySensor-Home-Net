@@ -10,7 +10,7 @@
 #define POLL_WAIT_SECONDS 182U
 #define MYCONTROLLER_ENGINE 1 /* https://www.mycontroller.org/ */
 
-class NodeLiveRssi {
+class NodeLiveRssi : public SensorInterface<NodeLiveRssi> {
     private:
         bool isAction = true;
         int16_t rssi = 0;
@@ -37,9 +37,8 @@ class NodeLiveRssi {
         }
 
     public:
-        void init(uint16_t) {}
-        void init() {}
-        bool presentation() {
+        void go_init() {}
+        bool go_presentation() {
 
 #           if !defined(MYCONTROLLER_ENGINE)
             uint8_t id = getId();
@@ -50,13 +49,14 @@ class NodeLiveRssi {
 #           endif
             return true;
         }
-        void data(uint16_t & cnt) {
+        void go_data(uint16_t & cnt) {
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (radioQuality()) {
 #                   if !defined(MYCONTROLLER_ENGINE)
                     reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
 #                   else
-                    String s = "rssi:" + rssi;
+                    String s = String("rssi:");
+                    s.concat(rssi);
                     reportMsg(getId(), V_VAR5, s.c_str());
 #                   endif
                 }
@@ -64,7 +64,7 @@ class NodeLiveRssi {
                     isAction = false;
             }
         }
-        bool data(const MyMessage & msg) {
+        bool go_data(__attribute__ (( __unused__ )) const MyMessage&) {
             return false;
         }
 };

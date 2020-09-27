@@ -3,10 +3,12 @@
 
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;
-SensorInterface<NodeDimmer>   ndimm  = SensorInterface<NodeDimmer>(new NodeDimmer(clsLight));
-SensorInterface<NodeLiveTemp> nltemp = SensorInterface<NodeLiveTemp>(new NodeLiveTemp());
-SensorInterface<NodeLiveBat>  nlbat  = SensorInterface<NodeLiveBat>(new NodeLiveBat());
-SensorInterface<NodeLiveRssi> nlrssi = SensorInterface<NodeLiveRssi>(new NodeLiveRssi());
+NodeLiveTemp  nltemp = NodeLiveTemp();
+NodeLiveBat   nlbat  = NodeLiveBat();
+NodeLiveRssi  nlrssi = NodeLiveRssi();
+NodeLiveMem   nlmem  = NodeLiveMem();
+NodeLiveLight nlight = NodeLiveLight();
+NodeDimmer    ndimm  = NodeDimmer(&nlight);
 
 void setup() {}
 void before() {
@@ -14,11 +16,12 @@ void before() {
   PRINTINIT();
   PRINTBUILD();
 
-  clsLight->init();
+  nlight.init();
   ndimm.init();
   nlbat.init();
   nlrssi.init();
   nltemp.init();
+  nlmem.init();
 
   INFO_LED(1);
 }
@@ -40,7 +43,7 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 4U: {
-      if (!clsLight->presentation())
+      if (!nlight.presentation())
         return false;
       break;
     }
@@ -54,6 +57,11 @@ bool presentationStep(uint8_t idx) {
         return false;
       break;
     }
+    case 7U: {
+      if (!nlmem.presentation())
+        return false;
+      break;
+    }
     default: {
       PRINTLN("-- Wrong number ID\n");
       return false;
@@ -64,7 +72,7 @@ bool presentationStep(uint8_t idx) {
 void presentation() {
   if (presentStatus == SENSOR_ID_NONE)
     return;
-  while (presentStatus <= 6U) {
+  while (presentStatus <= 7U) {
     if (!presentationStep(presentStatus))
       return;
     presentStatus++;
@@ -80,11 +88,12 @@ void loop() {
 
   } else if (isTransportReady()) {
     
-    clsLight->data(cnt);
+    nlight.data(cnt);
     ndimm.data(cnt);
     nltemp.data(cnt);
     nlbat.data(cnt);
     nlrssi.data(cnt);
+    nlmem.data(cnt);
 
     cnt++;
     if (cnt >= 60000U)
@@ -105,13 +114,15 @@ void receive(const MyMessage & msg) {
   PRINTLN("GW | receive");
    */
   
-  if (clsLight->data(msg))
+  if (nlight.data(msg))
     return;
   if (ndimm.data(msg))
     return;
   if (nltemp.data(msg))
     return;
   if (nlbat.data(msg))
+    return;
+  if (nlmem.data(msg))
     return;
   
   (void) nlrssi.data(msg);

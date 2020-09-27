@@ -23,6 +23,15 @@
 #  define MY_RF24_CE_PIN WD4
 #  define MY_RF24_CS_PIN WD8
 #  define MY_RF24_PA_LEVEL RF24_PA_HIGH
+/*
+	ESP8266 (wemos mini) -> NRF2401
+	D8 - CSN
+	D7 - MOSI
+	D6 - MISO
+	D5 - SCK
+	D4 - CE
+ */
+
 // #  define MY_RF24_ENABLE_ENCRYPTION
 
 #  define MY_GATEWAY_ESP8266
