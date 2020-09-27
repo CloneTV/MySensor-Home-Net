@@ -179,9 +179,13 @@ class NodeLiveLight {
                         ((i < s.length()) && (idx < __NELE(baselight)));
                         i++) {
                         if ((s.charAt(i) == ';') || (s.charAt(i) == '|')) {
-                            baselight[idx] = static_cast<uint16_t>(s.substring(pos, i).toInt());
+                            String ss = s.substring(pos, i);
+                            if (ss.length() > 0) {
+                                int16_t n = static_cast<int16_t>(ss.toInt());
+                                if (n > 0)
+                                    baselight[idx++] = static_cast<uint16_t>(n);
+                            }
                             pos = (i + 1);
-                            idx++;
                         }
                     }
                     isAction[IDX_Setup] = true;
