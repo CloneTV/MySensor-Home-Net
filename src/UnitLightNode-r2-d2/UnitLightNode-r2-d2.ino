@@ -11,22 +11,40 @@ NodeLiveLight nlight = NodeLiveLight();
 NodeRelay     nrelay = NodeRelay(&nlight);
 NodeDimmer    ndimm  = NodeDimmer(&nlight);
 
-void setup() {}
+void setup() {
+  do {
+    if (!nlight.init())
+      break;
+    if (!ndimm.init())
+      break;
+    if (!nrelay.init())
+      break;
+    if (!nltemp.init())
+      break;
+    if (!nlbat.init())
+      break;
+    if (!nlrssi.init())
+      break;
+    if (!nlmem.init())
+      break;
+
+    INFO_LED(2);
+    return;
+
+  } while(false);
+
+  PRINTLN("--- setup init sensors ERROR.. reboot");
+  while(true) { PRINTLN("."); delay(500); }
+
+}
 void before() {
   INIT_LED();
   PRINTINIT();
+  wait(500);
   PRINTBUILD();
-
-  nlight.init();
-  ndimm.init();
-  nrelay.init();
-  nltemp.init();
-  nlbat.init();
-  nlrssi.init();
-  nlmem.init();
-  
   INFO_LED(1);
 }
+
 bool presentationStep(uint8_t idx) {
   switch (idx) {
     case 1U: {

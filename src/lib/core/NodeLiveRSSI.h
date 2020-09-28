@@ -37,7 +37,9 @@ class NodeLiveRssi : public SensorInterface<NodeLiveRssi> {
         }
 
     public:
-        void go_init() {}
+        bool go_init() {
+            return true;
+        }
         bool go_presentation() {
 
 #           if !defined(MYCONTROLLER_ENGINE)

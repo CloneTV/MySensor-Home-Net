@@ -2,7 +2,7 @@
 #define __WEMOS_D1_MINI_H 1
 
 /* Wemos D1 Mini Pinout
-      name | gpio | desc
+       name | gpio | desc
 */
 #  define WD0 16
 #  define WD1 5
@@ -18,4 +18,3 @@
 #  define WA0 A0
 
 #endif
-

@@ -2,6 +2,8 @@
 #if !defined(__MY_GW_CONFIG_ESP_H)
 #define __MY_GW_CONFIG_ESP_H 1
 
+#  if 0
+
 /* WI-FI */
 #  define MY_WIFI_SSID "ssid"
 #  define MY_WIFI_PASSWORD "pwd"
@@ -16,4 +18,5 @@
 #  define MY_MQTT_USER "user id"
 #  define MY_MQTT_PASSWORD "user pwd"
 
+#  endif
 #endif

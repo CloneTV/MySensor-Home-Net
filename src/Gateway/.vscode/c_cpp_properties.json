@@ -23,6 +23,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\AP3216_AmbientLightAndProximity\\src",
                 "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\Adafruit_BMP280_Library",
                 "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\IRremoteESP8266\\src",
                 "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\MySensors"

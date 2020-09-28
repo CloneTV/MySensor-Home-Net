@@ -6,7 +6,7 @@
  *  https://forum.arduino.cc/index.php?topic=143584.msg1519824#msg1519824
  */
 
-#include "Int64String.h"
+#include "core/Int64String.h"
 #define base16char(A) ("0123456789ABCDEF"[A])
 
 String Int64ToString(uint64_t value, uint8_t base, bool prefix, bool sign) {

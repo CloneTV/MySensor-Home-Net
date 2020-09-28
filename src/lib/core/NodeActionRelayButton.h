@@ -89,7 +89,7 @@ class NodeRelayButton : public SensorInterface<NodeRelayButton> {
             delete ev[i].b;
           }
         }
-        void go_init() {
+        bool go_init() {
 
           MY_CRITICAL_SECTION {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -121,6 +121,7 @@ class NodeRelayButton : public SensorInterface<NodeRelayButton> {
                 */
             }
           }
+          return true;
         }
         bool go_presentation() {
           

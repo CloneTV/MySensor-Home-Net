@@ -1,6 +1,10 @@
 #if !defined(__MY_SENSOR_LIGHT_LEVEL_H)
 #define __MY_SENSOR_LIGHT_LEVEL_H 1
 
+#  if defined(__MY_SENSOR_I2C_LIGHT_PROXIMITY_LEVEL_H)
+#    pragma message "WARNING - do not include 'NodeI2CLight.h', sensor ID intersect!"
+#  endif
+
 /* ------- LIGHT LEVEL SENSOR ------- */
 
 #  define CALIBRATE_MIN 0
@@ -78,9 +82,10 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
         }
 
     public:
-        void go_init() {
+        bool go_init() {
             calibrate();
             isAction[IDX_Calculate] = static_cast<bool>(loadState(getAutoId()));
+            return true;
         }
         NodeLiveLight::LIGHTS read() {
 
@@ -215,4 +220,9 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
 };
 
 #  undef POLL_WAIT_SECONDS
+#  undef IDX_Calculate
+#  undef IDX_Change
+#  undef IDX_Start
+#  undef IDX_Setup
+
 #endif

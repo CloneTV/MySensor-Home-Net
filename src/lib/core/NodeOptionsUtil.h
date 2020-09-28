@@ -1,6 +1,22 @@
 #if !defined(__NODE_SENSORS_ALL_H)
 #define __NODE_SENSORS_ALL_H 1
 
+static inline bool presentData(const uint8_t id, const mysensors_sensor_t data, const char *desc) {
+  wait(100);
+  if (desc)
+    return present(id, data, desc);
+  else
+    return present(id, data);
+}
+static inline bool presentData(const uint8_t id, const mysensors_data_t data, __attribute__ (( __unused__ )) const char*) {
+  wait(100);
+  return request(id, data);
+}
+static inline bool presentData(const char *name, const char *ver, __attribute__ (( __unused__ )) const char*) {
+  wait(100);
+  return sendSketchInfo(name, ver);
+}
+
 #define sensorIsValid(A, B) sensorIsValid_(A, __NELE(A), B);
 template <typename T>
 uint8_t sensorIsValid_(const T base[], const uint8_t & sz, const uint8_t & id) {
@@ -15,6 +31,11 @@ template<typename T>
 void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val) {
     MyMessage msg(id, tag);
     send(msg.set(val), true);
+}
+template<typename T>
+void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val, const uint8_t decimals) {
+    MyMessage msg(id, tag);
+    send(msg.set(val, decimals), true);
 }
 template<typename T>
 void reportMsg(const uint8_t & id, const mysensors_internal_t & tag, const T & val) {
@@ -56,25 +77,6 @@ void presentTimer() {
     yield();
   }
   PRINTLN(" - timer end");
-}
-
-static inline bool presentData(const uint8_t id, const mysensors_sensor_t data, const char *desc) {
-  wait(100);
-  if (desc)
-    return present(id, data, desc);
-  else
-    return present(id, data);
-}
-static inline bool presentData(const uint8_t id, const mysensors_data_t data, const char *desc) {
-  wait(100);
-  if (desc)
-    return request(id, data, desc);
-  else
-    return request(id, data);
-}
-static inline bool presentData(const char *name, const char *ver, __attribute__ (( __unused__ )) const char*) {
-  wait(100);
-  return sendSketchInfo(name, ver);
 }
 
 #endif

@@ -72,7 +72,7 @@ class NodeRelay : public SensorInterface<NodeRelay> {
         NodeRelay(NodeLiveLight const *l) {
           light = l;
         }
-        void go_init() {
+        bool go_init() {
 
           MY_CRITICAL_SECTION {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
@@ -96,6 +96,7 @@ class NodeRelay : public SensorInterface<NodeRelay> {
                 */
             }
           }
+          return true;
         }
         bool go_presentation() {
           

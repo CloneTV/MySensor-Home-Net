@@ -24,7 +24,9 @@ class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
         }
 
     public:
-        void go_init() {}
+        bool go_init() {
+            return true;
+        }
         bool go_presentation() {
             /*
               PRINTLN("NODE TEMP | presentation");

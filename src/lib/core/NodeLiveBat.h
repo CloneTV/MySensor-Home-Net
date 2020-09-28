@@ -32,7 +32,7 @@ class NodeLiveBat : public SensorInterface<NodeLiveBat> {
         }
 
     public:
-        void go_init() {
+        bool go_init() {
 #           if defined(MY_GATEWAY_ESP8266)
                 ADC_MODE(ADC_VCC);
 #           elif defined(__AVR_ATmega2560__)
@@ -40,6 +40,7 @@ class NodeLiveBat : public SensorInterface<NodeLiveBat> {
 #           else
                 analogReference(INTERNAL);
 #           endif
+            return true;
         }
         bool go_presentation() {
             return true;

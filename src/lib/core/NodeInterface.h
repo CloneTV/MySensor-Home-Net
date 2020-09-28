@@ -9,8 +9,8 @@
 template<class T>
 class SensorInterface {
     public:
-        void init() {
-            static_cast<T*>(this)->go_init();
+        bool init() {
+            return static_cast<T*>(this)->go_init();
         }
         void data(uint16_t & c) {
             static_cast<T*>(this)->go_data(c);

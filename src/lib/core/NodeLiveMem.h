@@ -2,7 +2,12 @@
 #define __MY_SENSOR_MEMORY_FREE_H 1
 
 /* ------- MEMORY FREE ------- */
-#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
+
+#  if defined(ENABLE_LIVE_FREE_MEM)
+
+#  if defined(ESP8266)
+#    include <ESP.h>
+#  elif !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
 #    ifdef __arm__
         extern "C" char* sbrk(int incr);
 #    else
@@ -14,7 +19,9 @@ class NodeLiveMem : public SensorInterface<NodeLiveMem> {
     private:
         bool isAction = true;
         uint16_t getFreeMem() {
-#           if defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
+#           if defined(ESP8266)            
+                return static_cast<uint16_t>(ESP.getFreeHeap());
+#           elif defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
                 uint8_t *h, *s;
                 s = (uint8_t *)malloc(4);
                 h = s;
@@ -37,7 +44,9 @@ class NodeLiveMem : public SensorInterface<NodeLiveMem> {
         }
 
     public:
-        void go_init() {}
+        bool go_init() {
+            return true;
+        }
         bool go_presentation() {
 
             uint8_t id = getId();
@@ -68,4 +77,5 @@ class NodeLiveMem : public SensorInterface<NodeLiveMem> {
         }
 };
 
+#  endif
 #endif

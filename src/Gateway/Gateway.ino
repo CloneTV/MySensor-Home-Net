@@ -1,33 +1,16 @@
-/*
- *
- * DESCRIPTION
- * The ESP8266 MQTT gateway sends radio network (or locally attached sensors) data to your MQTT broker.
- * The node also listens to MY_MQTT_TOPIC_PREFIX and sends out those messages to the radio network
- *
- * LED purposes:
- * - To use the feature, uncomment any of the MY_DEFAULT_xx_LED_PINs in your sketch
- * - RX (green) - blink fast on radio message received. In inclusion mode will blink fast only on presentation received
- * - TX (yellow) - blink fast on radio message transmitted. In inclusion mode will blink slowly
- * - ERR (red) - fast blink on error during transmission error or receive crc error
- *
- * See https://www.mysensors.org/build/connect_radio for wiring instructions.
- *
- * If you are using a "barebone" ESP8266, see
- * https://www.mysensors.org/build/esp8266_gateway#wiring-for-barebone-esp8266
- *
- * Inclusion mode button:
- * - Connect GPIO5 (=D1) via switch to GND ('inclusion switch')
- *
- */
 
-#include "Gateway.h"
+
+#include "core/NodeOptions.h"
 #include <ArduinoOTA.h>
-#include "IrControl.h"
-#include "WeatherControl.h"
 
-const PROGMEM char * const str_firmware[] = {
-  MY_HOSTNAME, MY_VERSION
-};
+mutex_t lockInit{};
+uint8_t presentStatus = 1U;
+uint16_t cnt = 0;
+NodeLiveRssi   nlrssi = NodeLiveRssi();
+NodeLiveMem    nlmem  = NodeLiveMem();
+NodeI2CWeather nbaro  = NodeI2CWeather();
+NodeI2CLight   nlight = NodeI2CLight();
+NodeIrControl  nirrcv = NodeIrControl();
 
 #if defined(MY_DEBUG)
 const PROGMEM char * const str_ota[] = {
@@ -35,27 +18,21 @@ const PROGMEM char * const str_ota[] = {
 };
 #endif
 
-IrControl ir{};
-WeatherControl weather{};
+void before() {
+  Wire.begin();
+  INIT_LED();
+  PRINTINIT();
+  wait(500);
 
-void setup() {
-
-#if defined(MY_DEFAULT_ERR_LED_PIN)
-  pinMode(MY_DEFAULT_ERR_LED_PIN, OUTPUT);
-  digitalWrite(MY_DEFAULT_ERR_LED_PIN, LOW);
-#endif
-  
-  pinMode(PIN_SENSOR_IR_SEND, OUTPUT);
-  pinMode(PIN_SENSOR_IR_RECV, INPUT);
-  digitalWrite(PIN_SENSOR_IR_SEND, LOW);
-  digitalWrite(PIN_SENSOR_IR_RECV, LOW);
+  PRINTLN("--- before START");
+  CreateMutex(&lockInit);
 
   ArduinoOTA.setHostname(str_firmware[0]);
   ArduinoOTA.onStart([]() {
-    PRINTLN("ArduinoOTA start");
+    PRINTLN("\nOTA start");
   });
   ArduinoOTA.onEnd([]() {
-    PRINTLN("\nArduinoOTA end\n");
+    PRINTLN("\nOTA end");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     PRINTF(str_ota[0], (progress / (total / 100)));
@@ -75,43 +52,144 @@ void setup() {
     }
   });
   ArduinoOTA.begin();
+
+  wait(500);
 }
 
-void before() {
-# if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
-# endif
-  ir.init();
-  if (!weather.init(BMP_ADDRESS)) {
-    PRINTLN("BMP280 sensor detect failed!");
-    ERROR_LED();
-    for (;;);
+void setup() {
+  if (!GetMutex(&lockInit)) {
+    PRINTLN("--- setup MUTEX LOCK");
+    return;
   }
+  do {
+    if (!nbaro.init())
+      break;
+    if (!nlight.init())
+      break;
+    if (!nirrcv.init())
+      break;
+    if (!nlrssi.init())
+      break;
+    if (!nlmem.init())
+      break;
+
+    INFO_LED(1);
+    ReleaseMutex(&lockInit);
+    return;
+
+  } while(false);
+
+  PRINTLN("--- setup init sensors ERROR.. reboot");
+  while(true) { PRINTLN("."); delay(500); }
 }
 
+bool presentationStep(uint8_t idx) {
+  switch (idx) {
+    case 1U: {
+      if (!presentSend(str_firmware[0], str_firmware[1]))
+        return false;
+      break;
+    }
+    case 2U: {
+      if (!nirrcv.presentation())
+        return false;
+      break;
+    }
+    case 3U: {
+      if (!nbaro.getReady())
+        return false;
+      if (!nbaro.presentation())
+        return false;
+      break;
+    }
+    case 4U: {
+      if (!nlight.presentation())
+        return false;
+      break;
+    }
+    case 5U: {
+      if (!nlrssi.presentation())
+        return false;
+      break;
+    }
+    case 6U: {
+      if (!nlmem.presentation())
+        return false;
+      break;
+    }
+    default: {
+      PRINTLN("-- Wrong number ID\n");
+      return false;
+    }
+  }
+  return true;
+}
 void presentation() {
-  
-  presentSend(str_firmware[0], str_firmware[1]);
-  //
-  presentSend(NODE_SENSOR_IR_SEND, S_IR);
-  presentSend(NODE_SENSOR_IR_SEND, V_IR_SEND);
-  presentSend(NODE_SENSOR_IR_RECV, S_IR);
-  presentSend(NODE_SENSOR_IR_RECV, V_IR_RECEIVE);
-  //
-  presentSend(NODE_SENSOR_WETHER_TEMP, S_TEMP);
-  presentSend(NODE_SENSOR_WETHER_BARO, S_BARO);
-}
 
+  if (!GetMutex(&lockInit)) {
+    PRINTLN("--- INIT presentation MUTEX LOCK");
+    return;
+  }
+  if ((presentStatus == SENSOR_ID_NONE) || (presentStatus == 0U))
+    return;
+  
+  while (presentStatus <= 6U) {
+    if (!presentationStep(presentStatus)) {
+      PRINTF("--- INIT presentation [%d] ERROR\n", presentStatus);
+      ReleaseMutex(&lockInit);
+      return;
+    }
+    PRINTF("--- INIT presentation [%d] OK\n", presentStatus);
+    presentStatus++;
+  }
+  presentStatus = SENSOR_ID_NONE;
+  ReleaseMutex(&lockInit);
+  INFO_LED(2);
+}
 void loop() {
-  ArduinoOTA.handle(); yield();
-  ir.data();           yield();
-  weather.data();      yield();
-  delay(100);
+  if (presentStatus != SENSOR_ID_NONE) {
+    presentation();
+    if (presentStatus != SENSOR_ID_NONE)
+      presentTimer<30>();
+
+  } else if (isTransportReady()) {
+
+    ArduinoOTA.handle();
+    nirrcv.data(cnt);
+    nlight.data(cnt);
+    nbaro.data(cnt);
+    nlmem.data(cnt);
+    nlrssi.data(cnt);
+
+    cnt++;
+    if (cnt >= 60000U)
+      cnt = 0U;
+  } else {
+    wait(10000);
+  }
+  wait(500);
+}
+void receive(const MyMessage & msg) {
+  if (msg.isAck()) {
+    /*
+     PRINTLN("GW | ACK");
+     */
+     return;
+  }
+  /*
+  PRINTLN("GW | receive");
+   */
+
+  if (nirrcv.data(msg))
+    return;
+  if (nlight.data(msg))
+    return;
+  if (nbaro.data(msg))
+    return;
+  if (nlmem.data(msg))
+    return;
   
+  (void) nlrssi.data(msg);
 }
 
-void receive(const MyMessage &msg) {
-    if (msg.isAck())
-      PRINTLN("-- !! This is an ack from gateway..");
-    if (msg.type == V_IR_SEND)
-      ir.data(msg);
-}
+// --------------------------------------------------------------------- //
