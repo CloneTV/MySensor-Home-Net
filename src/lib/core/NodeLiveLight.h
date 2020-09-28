@@ -40,6 +40,7 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
         NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
                               stsend = NodeLiveLight::LIGHTS::None;
         /*
+            // default base value
         uint16_t baselight[6] = {
             5U, 50U, 150U,
             300U, 500U, 700U
@@ -149,6 +150,9 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
             }
             if (isAction[IDX_Setup]) {
                 isAction[IDX_Setup] = false;
+                
+                return;
+                
                 String sdata = String("{\"data\":[");
                 for (uint16_t i = 0U; i < __NELE(baselight); i++) {
                     sdata.concat(baselight[i]);
@@ -181,6 +185,8 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
                 case V_CUSTOM: {
                     if (msg.sensor != getAutoSetupId())
                         return false;
+
+                    return true;
                     
                     String s = String(msg.getString());
                     for (

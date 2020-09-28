@@ -55,6 +55,13 @@ class NodeLiveRssi : public SensorInterface<NodeLiveRssi> {
 #                   if !defined(MYCONTROLLER_ENGINE)
                     reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
 #                   else
+                    /*
+                        // Compare memory size, snprintf -> String
+                    char *buff = new char[18]{};
+                    (void) snprintf(buff, 17, "rssi:%d", rssi);
+                    reportMsg(getId(), V_VAR5, buff);
+                    delete [] buff;
+                    */
                     String s = String("rssi:");
                     s.concat(rssi);
                     reportMsg(getId(), V_VAR5, s.c_str());

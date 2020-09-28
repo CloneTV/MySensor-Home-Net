@@ -35,7 +35,7 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 2U: {
-      if (!nltemp.presentation())
+      if (!ndimm.presentation())
         return false;
       break;
     }
@@ -45,12 +45,12 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 4U: {
-      if (!ndimm.presentation())
+      if (!nlight.presentation())
         return false;
       break;
     }
     case 5U: {
-      if (!nlight.presentation())
+      if (!nltemp.presentation())
         return false;
       break;
     }
