@@ -10,7 +10,6 @@
 /* BOARD TYPE, posible Atmega328p, ESP-8266 */
 #  if defined(ESP8266)
 #    include "Wemos_D1_Mini.h"
-#    include "ESP2866_mutex.h"
 #    define MY_GATEWAY_ESP8266 1
 #  elif (defined(__AVR_ATmega328P__) || \
         defined(__AVR_ATmega328__)  || \
@@ -23,23 +22,44 @@
 #    define __AVR_INTERNAL_LIVE_COMPATIBLE__ 1
 #  endif
 
-#include "../config.h"
+#  include "../config.h"
 
-/* DEBUG */
+/* INCLUSION BUTTON, LEDS */
+#  if defined(I2C_PCF8574_ENABLE)
+#    define MY_DEFAULT_LED_I2C 1
+#    if defined(MY_INCLUSION_BUTTON_FEATURE)
+#      define MY_INCLUSION_MODE_FEATURE
+#      define MY_INCLUSION_BUTTON_FEATURE
+#      define MY_INCLUSION_MODE_DURATION 10
+#      define MY_INCLUSION_BUTTON_TIMEOUT 500
+#    endif
+#  endif
+
+/* DEBUG - SERIAL ENABLE/DISABLE */
 #  if (!defined(NO_DEBUG) || (defined(NO_DEBUG) && (NO_DEBUG == 0)))
 #    define MY_DEBUG
+#    if defined(ESP8266)
+#      define MY_BAUD_RATE 115200
+#    else
+#      define MY_BAUD_RATE 57600
+#    endif
 #    if (defined(NO_DEBUG_RADIO) && (NO_DEBUG_RADIO == 0))
 #      define MY_SPECIAL_DEBUG
 #      define MY_DEBUG_VERBOSE
 #      define MY_DEBUG_VERBOSE_RF24
 #      define MY_DEBUG_VERBOSE_SIGNING
        /* OTA DEBUG ENABLE */
+#      if !defined(ESP8266)
+#        define MY_DEBUG_VERBOSE_OTA_UPDATE
+#      endif
 //#      define MY_DEBUG_OTA 0
-#      define MY_DEBUG_VERBOSE_OTA_UPDATE
 //#      define MY_OTA_LOG_RECEIVER_FEATURE
 //#      define MY_OTA_LOG_SENDER_FEATURE
 //#      define MY_DEBUG_OTA_DISABLE_ECHO
 #    endif
+#  else
+#    define MY_DISABLED_SERIAL 1
+#    undef MY_BAUD_RATE
 #  endif
 #  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
 #    define ENABLE_DEBUG 1
@@ -63,11 +83,22 @@
 // #  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
 /*
 	ESP8266 (wemos mini) -> NRF2401
-	D8 - CSN
-	D7 - MOSI
-	D6 - MISO
-	D5 - SCK
-	D4 - CE
+	D8 - CSN  -> (v+)2
+	D7 - MOSI -> (v+)3
+	D6 - MISO -> (v-)4
+	D5 - SCK  -> (v-)3
+	D4 - CE   -> (v-)2
+        V+  -> 1
+        V-  -> 1
+
+	ESP8266 (wemos d1r1) -> NRF2401
+	D10 - CSN  -> (v+)2
+	D13 - MOSI -> (v+)3
+	D12 - MISO -> (v-)4
+	D14 - SCK  -> (v-)3
+	D9  - CE   -> (v-)2
+        V+  -> 1
+        V-  -> 1
  */
 
 /* MQTT */
@@ -78,16 +109,6 @@
 // #    define MY_MQTT_CLIENT_PUBLISH_RETAIN
 #    define MY_MQTT_PUBLISH_TOPIC_PREFIX "gw-out"
 #    define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "gw-in"
-#  endif
-
-/* SERIAL ENABLE/DISABLE */
-#  if !defined(MY_DEBUG)
-#    define MY_DISABLED_SERIAL 1
-#    undef MY_BAUD_RATE
-#  elif defined(ESP8266)
-#    define MY_BAUD_RATE 115200
-#  else
-#    define MY_BAUD_RATE 57600
 #  endif
 
 #  if !defined(DIMMER_SENSOR)
@@ -102,7 +123,11 @@
 
 #  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
 
-#    define PRINTINIT() Serial.begin(MY_BAUD_RATE)
+#    if defined(ESP8266)
+#      define PRINTINIT() { Serial.begin(MY_BAUD_RATE, SERIAL_8N1, SERIAL_TX_ONLY); while (!Serial) delay(50); }
+#    else
+#      define PRINTINIT() Serial.begin(MY_BAUD_RATE)
+#    endif
 #    define PRINTBUILD() {                                                                                                     \
               const PROGMEM char build_sketch[] = "-- Build: %s - %s, %s\n-- Name: [%s:%s]\n-- Init: dimmers=%u, releys=%u, releysBtn=%u\n"; \
               PRINTF(build_sketch,                                                                                             \
@@ -119,6 +144,7 @@
 #    endif
 #    define PRINT2(A,B) Serial.print(A,B)
 #    define PRINTLN(A) Serial.println(F(A)); Serial.flush()
+#    define PRINTVLN(A) Serial.println(A)
 #  else
 #    define PRINTINIT()
 #    define PRINTBUILD()
@@ -127,6 +153,7 @@
 #    define PRINTF(A, ...)
 #    define PRINT2(A,B)
 #    define PRINTLN(A)
+#    define PRINTVLN(A)
 #  endif
 
 #  define STR_CONCAT(A,B) STR_CONCAT_(A,B)
@@ -143,6 +170,12 @@
 #    define INIT_LED() pinMode(LED_BUILTIN, OUTPUT)
 #    define ERROR_LED(A) __extension__ ({digitalWrite(LED_BUILTIN, HIGH); wait(A); yield(); digitalWrite(LED_BUILTIN, LOW);})
 #    define INFO_LED(A) __extension__ ({bool b_ = false; uint8_t cnt_ = A; while (--cnt_ > 0U) { digitalWrite(LED_BUILTIN, (b_) ? HIGH : LOW); b_ = !b_; wait(500); yield();};})
+
+#  elif (defined(ESP8266) && defined(I2C_PCF8574_ENABLE))
+#    define INIT_LED()
+#    define ERROR_LED(A) __extension__ ({nled.errorLed(0U); wait(A); yield(); nled.errorLed(255U);})
+#    define INFO_LED(A) __extension__ ({uint8_t cnt_ = A, b_ = LOW; while (--cnt_ > 0U) { nled.infoLed(b_); b_ = ((b_ == LOW) ? HIGH : LOW); wait(500);};})
+
 #  else
 #    define INIT_LED()
 #    define ERROR_LED(A)
@@ -231,24 +264,31 @@ const PROGMEM char * const str_firmware[] = {
     }
 #  endif
 
-#include <Wire.h>
-#include <MySensors.h>
-#include "NodeOptionsPWM.h"
-#include "NodeInterface.h"
-#include "NodeOptionsUtil.h"
+#  include <Wire.h>
+#  if defined(ESP8266)
+#    include "ESP2866_mutex.h"
+#    include "ESP8266_OTA.h"
+#  endif
+#  include <MySensors.h>
+#  include <core/MyInclusionMode.h>
+#  include "NodeOptionsPWM.h"
+#  include "NodeInterface.h"
+#  include "NodeOptionsUtil.h"
 
 /* ------- ENABLE/DISABLE BLOCK ------- */
 
-#   if (INTERNAL_LIVE_ILLUMINATION > 0)
-#     if defined(ESP8266)
+#   if (INTERNAL_LIVE_ILLUMINATION >= 0)
+#     if (defined(I2C_AP3216_ENABLE) && defined(ESP8266))
+#       define ENABLE_I2C_SENSOR_ILLUMINATION 1
 #       include "NodeI2CLight.h"
 #     else
+#       define ENABLE_LIVE_SENSOR_ILLUMINATION 1
 #       include "NodeLiveLight.h"
 #     endif
 #   endif
 #   if (INTERNAL_LIVE_TEMP > 0)
-#     if defined(ESP8266)
-#       define ENABLE_LIVE_SENSOR_I2C_TEMP 1
+#     if (defined(I2C_BMP180_ENABLE) && defined(ESP8266))
+#       define ENABLE_I2C_SENSOR_TEMP 1
 #       include "NodeI2CWeather.h"
 #     else
 #       define MY_AVR_TEMPERATURE_OFFSET 334
@@ -256,6 +296,10 @@ const PROGMEM char * const str_firmware[] = {
 #       define ENABLE_LIVE_SENSOR_TEMP 1
 #       include "NodeLiveTemp.h"
 #     endif
+#   endif
+#   if defined(I2C_PCF8574_ENABLE)
+#     define ENABLE_I2C_GPIO_EXPANDER 1
+#     include "NodeI2CExpander.h"
 #   endif
 #   if (INTERNAL_LIVE_AUTO_FREE_MEM > 0)
 #     define ENABLE_LIVE_FREE_MEM 1
@@ -268,9 +312,6 @@ const PROGMEM char * const str_firmware[] = {
 #   if (INTERNAL_LIVE_VOLT_PIN >= 0)
 #     define ENABLE_LIVE_SENSOR_VOLT 1
 #     include "NodeLiveBat.h"
-#   endif
-#   if (INTERNAL_LIVE_ILLUMINATION_PIN >= 0)
-#     define ENABLE_LIVE_SENSOR_ILLUMINATION 1
 #   endif
 #   if (LIGHT_SENSOR > 0)
 #     define ENABLE_SENSOR_RELAY 1
@@ -291,7 +332,13 @@ const PROGMEM char * const str_firmware[] = {
 #   endif
 #   if (defined(ENABLE_SENSOR_IR_SEND) || defined(ENABLE_SENSOR_IR_RECEIVE))
 #     define ENABLE_SENSOR_IR 1
-#     include "NodeIrControl.h"
+#   endif
+#   if (INTERNAL_RF433_PIN >= 0)
+#     define ENABLE_SENSOR_RF433 1
+#     include "NodeCommand.h"
+#   endif
+#   if (defined(ENABLE_SENSOR_IR) && !defined(__MY_SENSOR_NODE_CMD_H))
+#       include "NodeIrControl.h"
 #   endif
 
 #endif

@@ -7,7 +7,7 @@
 #  if defined(POLL_WAIT_SECONDS)
 #    undef POLL_WAIT_SECONDS
 #  endif
-#define POLL_WAIT_SECONDS 182U
+#define POLL_WAIT_SECONDS 382U
 #define MYCONTROLLER_ENGINE 1 /* https://www.mycontroller.org/ */
 
 class NodeLiveRssi : public SensorInterface<NodeLiveRssi> {

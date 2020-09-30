@@ -7,7 +7,7 @@
 #  if defined(POLL_WAIT_SECONDS)
 #    undef POLL_WAIT_SECONDS
 #  endif
-#define POLL_WAIT_SECONDS 181U
+#define POLL_WAIT_SECONDS 300U
 
 class NodeLiveBat : public SensorInterface<NodeLiveBat> {
     private:
@@ -53,7 +53,7 @@ class NodeLiveBat : public SensorInterface<NodeLiveBat> {
                     isAction = false;
             }
         }
-        bool go_data(__attribute__ (( __unused__ )) const MyMessage & msg) {
+        bool go_data(__attribute__ (( __unused__ )) const MyMessage&) {
             return false;
         }
 };

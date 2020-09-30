@@ -59,7 +59,6 @@ bool presentSend(const T1 & id, const T2 & val, const char *desc = nullptr) {
     b = presentData(id, val, desc);
     if (++cnt > 1000) {
       dbgPrintWait(id);
-      ERROR_LED(2);
       return b;
     }
     yield();

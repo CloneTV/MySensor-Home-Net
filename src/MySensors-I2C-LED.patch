@@ -1,0 +1,302 @@
+--- MySensors.h	Sat Aug 22 11:07:35 2020
++++ MySensors.h	Fri Oct  9 11:36:55 2020
+@@ -119,6 +119,8 @@
+
+ #if defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
+ #include "core/MyLeds.cpp"
++#elif defined(MY_DEFAULT_LED_I2C)
++#include "core/MyLedsI2C.cpp"
+ #else
+ #include "core/MyLeds.h"
+ #endif
+--- core/MyGatewayTransport.h	Sat Aug 22 11:07:35 2020
++++ core/MyGatewayTransport.h	Fri Oct  9 11:39:37 2020
+@@ -102,6 +102,8 @@
+  * @return true if message delivered
+  */
+ bool gatewayTransportSend(MyMessage &message);
++bool gatewayTransportSend(MyMessage &message, const bool);
++bool gatewayTransportSendToSubsribe(MyMessage &message, const bool);
+ 
+ /**
+  * @brief Check if a new message is available from controller
+--- core/MyGatewayTransportEthernet.cpp	Sat Aug 22 11:07:35 2020
++++ core/MyGatewayTransportEthernet.cpp	Fri Oct  9 11:46:50 2020
+@@ -90,8 +90,13 @@
+ 
+ #if defined(MY_GATEWAY_ESP8266) || defined(MY_GATEWAY_ESP32)
+ // Some re-defines to make code more readable below
+-#define EthernetServer WiFiServer
++#if defined(MY_MQTT_CA_CERT) && defined(MY_MQTT_CLIENT_CERT) && defined(MY_MQTT_CLIENT_KEY)
++#    define EthernetClient WiFiClientSecure
++#  else
+ #define EthernetClient WiFiClient
++#  endif
++
++#define EthernetServer WiFiServer
+ #define EthernetUDP WiFiUDP
+ #endif
+ 
+--- core/MyGatewayTransportMQTTClient.cpp	Sat Aug 22 11:07:35 2020
++++ core/MyGatewayTransportMQTTClient.cpp	Fri Oct  9 13:01:47 2020
+@@ -118,21 +118,31 @@
+ static MyMessage _MQTT_msg;
+ 
+ // cppcheck-suppress constParameter
+-bool gatewayTransportSend(MyMessage &message)
++static bool gatewayTransportSend_(MyMessage &message, const char *prefix, const bool retain)
+ {
+-	if (!_MQTT_client.connected()) {
++	if (!_MQTT_client.connected())
+ 		return false;
+-	}
+ 	setIndication(INDICATION_GW_TX);
+-	char *topic = protocolMyMessage2MQTT(MY_MQTT_PUBLISH_TOPIC_PREFIX, message);
++	char *topic = protocolMyMessage2MQTT(prefix, message);
+ 	GATEWAY_DEBUG(PSTR("GWT:TPS:TOPIC=%s,MSG SENT\n"), topic);
++	return _MQTT_client.publish(topic, message.getString(_convBuffer), retain);
++}
++
++bool gatewayTransportSend(MyMessage &message) {
+ #if defined(MY_MQTT_CLIENT_PUBLISH_RETAIN)
+-	const bool retain = message.getCommand() == C_SET ||
+-	                    (message.getCommand() == C_INTERNAL && message.getType() == I_BATTERY_LEVEL);
++	const bool retain = ((message.getCommand() == C_SET) ||
++	                    ((message.getCommand() == C_INTERNAL) &&
++	                     (message.getType()    == I_BATTERY_LEVEL)));
+ #else
+ 	const bool retain = false;
+-#endif /* End of MY_MQTT_CLIENT_PUBLISH_RETAIN */
+-	return _MQTT_client.publish(topic, message.getString(_convBuffer), retain);
++#	endif
++	return gatewayTransportSend_(message, MY_MQTT_PUBLISH_TOPIC_PREFIX, retain);
++}
++bool gatewayTransportSend(MyMessage &message, const bool retain) {
++	return gatewayTransportSend_(message, MY_MQTT_PUBLISH_TOPIC_PREFIX, retain);
++}
++bool gatewayTransportSendToSubsribe(MyMessage &message, const bool retain) {
++	return gatewayTransportSend_(message, MY_MQTT_SUBSCRIBE_TOPIC_PREFIX, retain);
+ }
+ 
+ void incomingMQTT(char *topic, uint8_t *payload, unsigned int length)
+--- core/MyInclusionMode.cpp	Sat Aug 22 11:07:35 2020
++++ core/MyInclusionMode.cpp	Fri Oct  9 14:21:48 2020
+@@ -18,31 +18,55 @@
+  */
+ 
+ #include "MyInclusionMode.h"
++#if defined(ARDUINO_ARCH_ESP8266)
++#  include <Esp.h>
++#endif
+ 
+ // global variables
+ extern MyMessage _msgTmp;
+ 
+-unsigned long _inclusionStartTime;
++uint16_t btncount = 0U;
++unsigned long _inclusionStartTime = 0U;
+ bool _inclusionMode;
+ 
++#if defined(ARDUINO_ARCH_ESP8266)
++unsigned long _rebootStartTime = 0U;
++bool _rebootMode;
++#endif
++
++#if (defined(MY_INCLUSION_BUTTON_FEATURE) && defined(MY_DEFAULT_LED_I2C))
++static btn_cb btnInclusionFunc = [](){ return false; };
++static led_cb ledInclusionFunc = [](uint8_t&){};
++
++void inclusionSetCb(btn_cb btn, led_cb led) {
++	btnInclusionFunc = btn;
++	ledInclusionFunc = led;
++}
++#endif
++
+ inline void inclusionInit()
+ {
++	_rebootMode = false;
+ 	_inclusionMode = false;
+ #if defined(MY_INCLUSION_BUTTON_FEATURE)
++#  if defined(MY_DEFAULT_LED_I2C)
++	 uint8_t state = static_cast<uint8_t>(LOW);
++	 ledInclusionFunc(state);
++#  else
+ 	// Setup digital in that triggers inclusion mode
+ 	hwPinMode(MY_INCLUSION_MODE_BUTTON_PIN, INPUT_PULLUP);
+-#endif
+ #if defined (MY_INCLUSION_LED_PIN)
+ 	// Setup LED pin that indicates inclusion mode
+ 	hwPinMode(MY_INCLUSION_LED_PIN, OUTPUT);
+ 	hwDigitalWrite(MY_INCLUSION_LED_PIN, LED_OFF);
+ #endif
+-
++#  endif
++#endif
+ }
+ 
+-
+ void inclusionModeSet(bool newMode)
+ {
++#if defined(MY_INCLUSION_BUTTON_FEATURE)
+ 	if (newMode != _inclusionMode) {
+ 		_inclusionMode = newMode;
+ 		// Send back mode change to controller
+@@ -50,23 +74,58 @@
+ 		if (_inclusionMode) {
+ 			_inclusionStartTime = hwMillis();
+ 		}
+-	}
+-#if defined (MY_INCLUSION_LED_PIN)
++#		if defined(MY_DEFAULT_LED_I2C)
++		uint8_t state = ((_inclusionMode) ? HIGH : LOW);
++		ledInclusionFunc(state);
++#		elif defined (MY_INCLUSION_LED_PIN)
+ 	hwDigitalWrite(MY_INCLUSION_LED_PIN, _inclusionMode ? LED_ON : LED_OFF);
+ #endif
+ }
++#endif
++}
+ 
+ inline void inclusionProcess()
+ {
+-#ifdef MY_INCLUSION_BUTTON_FEATURE
+-	if (!_inclusionMode && hwDigitalRead(MY_INCLUSION_MODE_BUTTON_PIN) == MY_INCLUSION_BUTTON_PRESSED) {
++#if defined(MY_INCLUSION_BUTTON_FEATURE)
++#  if defined(MY_DEFAULT_LED_I2C)
++	bool b = btnInclusionFunc();
++#  else
++	bool b = (hwDigitalRead(MY_INCLUSION_MODE_BUTTON_PIN) == MY_INCLUSION_BUTTON_PRESSED);
++#  endif
++
++	if ((b) && (++btncount < static_cast<uint16_t>(MY_INCLUSION_BUTTON_TIMEOUT))) {
++		return;
++	}
++	if (!b) {
++		btncount = 0U;
++		if (_rebootMode)
++			_rebootMode = false;
++		if (_inclusionMode)
++			inclusionModeSet(false);
++		return;
++	}
++	if (btncount == (UINT16_MAX - 1))
++		btncount = 100U;
++	if ((!_inclusionMode) && (b)) {
+ 		// Start inclusion mode
+ 		inclusionModeSet(true);
+ 	}
+-#endif
+-
+-	if (_inclusionMode && hwMillis()-_inclusionStartTime>MY_INCLUSION_MODE_DURATION*1000L) {
++	else if ((_inclusionMode) && (b)) {
++		if ((hwMillis() - _inclusionStartTime) > MY_INCLUSION_MODE_DURATION * 1000L) {
+ 		// inclusionTimeInMinutes minute(s) has passed.. stop inclusion mode
+ 		inclusionModeSet(false);
+ 	}
++	}
++
++#  if defined(ARDUINO_ARCH_ESP8266)
++    if ((!_rebootMode) && (b)) {
++		_rebootStartTime = hwMillis() + 15000U;
++		_rebootMode = true;
++
++	} else if ((_rebootMode) && (b)) {
++		if (_rebootStartTime < hwMillis())
++			ESP.restart();
++	}
++#  endif
++#endif
+ }
+--- core/MyInclusionMode.h	Sat Aug 22 11:07:35 2020
++++ core/MyInclusionMode.h	Fri Oct  9 14:22:02 2020
+@@ -22,6 +22,15 @@
+ 
+ #include "MySensorsCore.h"
+ 
++#if !defined(MY_INCLUSION_BUTTON_TIMEOUT)
++#  define MY_INCLUSION_BUTTON_TIMEOUT 500
++#endif
++
++#if (defined(MY_INCLUSION_BUTTON_FEATURE) && defined(MY_DEFAULT_LED_I2C))
++typedef bool (*btn_cb)();
++typedef void (*led_cb)(uint8_t&);
++void inclusionSetCb(btn_cb, led_cb);
++#endif
+ 
+ extern bool gatewayTransportSend(MyMessage &message);
+ 
+--- core/MyIndication.cpp	Sat Aug 22 11:07:35 2020
++++ core/MyIndication.cpp	Fri Oct  9 13:16:28 2020
+@@ -18,23 +18,23 @@
+  */
+ 
+ #include "MyIndication.h"
+-#if defined(MY_DEFAULT_TX_LED_PIN)|| defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ #include "MyLeds.h"
+ #endif
+ 
+ void setIndication( const indication_t ind )
+ {
+-#if defined(MY_DEFAULT_TX_LED_PIN)
++#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 	if ((INDICATION_TX == ind) || (INDICATION_GW_TX == ind)) {
+ 		ledsBlinkTx(1);
+ 	} else
+ #endif
+-#if defined(MY_DEFAULT_RX_LED_PIN)
++#if defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 		if ((INDICATION_RX == ind) || (INDICATION_GW_RX == ind)) {
+ 			ledsBlinkRx(1);
+ 		} else
+ #endif
+-#if defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 			if (ind > INDICATION_ERR_START) {
+ 				// Number of blinks indicates which error occurred.
+ 				ledsBlinkErr(ind-INDICATION_ERR_START);
+--- core/MyLeds.h	Sat Aug 22 11:07:35 2020
++++ core/MyLeds.h	Fri Oct  9 12:24:32 2020
+@@ -29,7 +29,12 @@
+ #define LED_OFF 0x1
+ #endif
+ 
+-#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined(MY_DEFAULT_LED_I2C)
++typedef void (*led_cb)(uint8_t&);
++void ledsSetCb(led_cb, led_cb, led_cb);
++#endif
++
++#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ #define ledBlinkTx(x,...) ledsBlinkTx(x)
+ #define ledBlinkRx(x,...) ledsBlinkRx(x)
+ #define ledBlinkErr(x,...) ledsBlinkErr(x)
+--- core/MySensorsCore.cpp	Sat Aug 22 11:07:35 2020
++++ core/MySensorsCore.cpp	Fri Oct  9 12:28:07 2020
+@@ -144,7 +144,7 @@
+ 		before();
+ 	}
+ 
+-#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined(MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 	ledsInit();
+ #endif
+ 
+@@ -620,7 +620,7 @@
+ {
+ 	hwWatchdogReset();
+ 	yield();
+-#if defined (MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined (MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 	ledsProcess();
+ #endif
+ }
+@@ -709,7 +709,7 @@
+ #endif
+ 	setIndication(INDICATION_SLEEP);
+ 
+-#if defined (MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN)
++#if defined (MY_DEFAULT_TX_LED_PIN) || defined(MY_DEFAULT_RX_LED_PIN) || defined(MY_DEFAULT_ERR_LED_PIN) || defined(MY_DEFAULT_LED_I2C)
+ 	// Wait until leds finish their blinking pattern
+ 	while (ledsBlinking()) {
+ 		doYield();

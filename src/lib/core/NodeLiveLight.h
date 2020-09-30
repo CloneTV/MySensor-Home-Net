@@ -1,18 +1,22 @@
 #if !defined(__MY_SENSOR_LIGHT_LEVEL_H)
 #define __MY_SENSOR_LIGHT_LEVEL_H 1
 
+
+#  if defined(ENABLE_LIVE_SENSOR_ILLUMINATION)
 #  if defined(__MY_SENSOR_I2C_LIGHT_PROXIMITY_LEVEL_H)
 #    pragma message "WARNING - do not include 'NodeI2CLight.h', sensor ID intersect!"
 #  endif
 
 /* ------- LIGHT LEVEL SENSOR ------- */
 
+typedef void (*light_input_cb)(int16_t&);
+
 #  define CALIBRATE_MIN 0
 #  define CALIBRATE_MAX 900
 #  if defined(POLL_WAIT_SECONDS)
 #    undef POLL_WAIT_SECONDS
 #  endif
-#define POLL_WAIT_SECONDS 60U
+#define POLL_WAIT_SECONDS 90U
 
 #define IDX_Calculate 0
 #define IDX_Change    1
@@ -43,6 +47,7 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
                 offset = 0;
         NodeLiveLight::LIGHTS state = NodeLiveLight::LIGHTS::None,
                               stsend = NodeLiveLight::LIGHTS::None;
+        light_input_cb cb = [](int16_t&){};
         /*
             // default base value
         uint16_t baselight[6] = {
@@ -82,6 +87,9 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
         }
 
     public:
+        void setCallBack(light_input_cb c) {
+            cb = c;
+        }
         bool go_init() {
             calibrate();
             isAction[IDX_Calculate] = static_cast<bool>(loadState(getAutoId()));
@@ -139,24 +147,24 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
 
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction[IDX_Start])) {
                 (void) read();
-                if (stsend != state) {
+                if ((stsend != state) || (isAction[IDX_Start])) {
                     /*
                     PRINTF("-- SEND LEVEL: %d/%u (%u|%u)\n", rawlight, getLevel(), (uint16_t)state, (uint16_t)stsend);
                     */
                     stsend = state;
+                    int16_t level = getLevel();
                     reportMsg(
                         getLummId(),
                         V_LIGHT_LEVEL,
-                        getLevel()
+                        level
                     );
+                    cb(level);
                 }
                 if (isAction[IDX_Start])
                     isAction[IDX_Start] = false;
             }
             if (isAction[IDX_Setup]) {
                 isAction[IDX_Setup] = false;
-                
-                return;
                 
                 String sdata = String("{\"data\":[");
                 for (uint16_t i = 0U; i < __NELE(baselight); i++) {
@@ -176,6 +184,12 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
         bool go_data(const MyMessage & msg) {
             
             switch (msg.getType()) {
+                case V_LIGHT_LEVEL: {
+                    if (msg.sensor != getLummId())
+                        return false;
+                    isAction[IDX_Start] = true;
+                    break;
+                }
                 case V_STATUS: {
                     if (msg.sensor != getAutoId())
                         return false;
@@ -191,8 +205,6 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
                     if (msg.sensor != getAutoSetupId())
                         return false;
 
-                    return true;
-                    
                     String s = String(msg.getString());
                     for (
                         uint16_t i = 0U, pos = 0U, idx = 0U;
@@ -224,5 +236,5 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
 #  undef IDX_Change
 #  undef IDX_Start
 #  undef IDX_Setup
-
+#  endif
 #endif

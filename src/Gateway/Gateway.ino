@@ -1,77 +1,71 @@
 
-
 #include "core/NodeOptions.h"
-#include <ArduinoOTA.h>
+#include "core/NodeCommand.h"
 
 mutex_t lockInit{};
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;
-NodeLiveRssi   nlrssi = NodeLiveRssi();
-NodeLiveMem    nlmem  = NodeLiveMem();
-NodeI2CWeather nbaro  = NodeI2CWeather();
-NodeI2CLight   nlight = NodeI2CLight();
-NodeIrControl  nirrcv = NodeIrControl();
 
-#if defined(MY_DEBUG)
-const PROGMEM char * const str_ota[] = {
-  "OTA Progress: %u%%\r", "Error[%u]: "
-};
-#endif
+NodeLiveRssi    nlrssi = NodeLiveRssi();
+NodeLiveMem     nlmem  = NodeLiveMem();
+NodeLiveLight   nlight = NodeLiveLight();
+NodeI2CWeather  nbaro  = NodeI2CWeather();
+NodeI2CExpander nled   = NodeI2CExpander();
+NodeCommand     ncmd   = NodeCommand();
 
 void before() {
-  Wire.begin();
-  INIT_LED();
-  PRINTINIT();
-  wait(500);
-
-  PRINTLN("--- before START");
+  Wire.begin(sda_PIN, scl_PIN);
   CreateMutex(&lockInit);
-
-  ArduinoOTA.setHostname(str_firmware[0]);
-  ArduinoOTA.onStart([]() {
-    PRINTLN("\nOTA start");
-  });
-  ArduinoOTA.onEnd([]() {
-    PRINTLN("\nOTA end");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    PRINTF(str_ota[0], (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    PRINTF(str_ota[1], error);
-    if (error == OTA_AUTH_ERROR) {
-      PRINTLN("Auth Failed");
-    } else if (error == OTA_BEGIN_ERROR) {
-      PRINTLN("Begin Failed");
-    } else if (error == OTA_CONNECT_ERROR) {
-      PRINTLN("Connect Failed");
-    } else if (error == OTA_RECEIVE_ERROR) {
-      PRINTLN("Receive Failed");
-    } else if (error == OTA_END_ERROR) {
-      PRINTLN("End Failed");
-    }
-  });
-  ArduinoOTA.begin();
-
-  wait(500);
+  OTASetup(
+    str_firmware[0],
+    static_cast<const char*>(MY_OTA_PASSWD)
+  );
+  PRINTLN("--- before() END");
 }
 
 void setup() {
   if (!GetMutex(&lockInit)) {
-    PRINTLN("--- setup MUTEX LOCK");
+    PRINTLN("--- setup() MUTEX LOCK");
     return;
   }
   do {
+    if (!nled.init())
+      break;
+    ledsSetCb(
+      [=](uint8_t & state) { nled.myRxLed(state); },
+      [=](uint8_t & state) { nled.myTxLed(state); },
+      [=](uint8_t & state) { nled.myErrLed(state); }
+    );
+#   if defined(MY_INCLUSION_BUTTON_FEATURE)
+    inclusionSetCb(
+      [=]() { return nled.incluseBtn(); },
+      [=](uint8_t & state) { nled.infoLed(state); }
+    );
+#   endif
     if (!nbaro.init())
       break;
     if (!nlight.init())
-      break;
-    if (!nirrcv.init())
       break;
     if (!nlrssi.init())
       break;
     if (!nlmem.init())
       break;
+    if (!ncmd.init())
+      break;
+
+#   if defined(ENABLE_I2C_SENSOR_ILLUMINATION)
+    nlight.setCallBack(
+      [=](float & level) {
+        ncmd.lightReceive(level);
+      }
+    );
+#   elif defined(ENABLE_LIVE_SENSOR_ILLUMINATION)
+    nlight.setCallBack(
+      [=](int16_t & level) {
+        ncmd.lightReceive(level);
+      }
+    );
+#   endif
 
     INFO_LED(1);
     ReleaseMutex(&lockInit);
@@ -80,6 +74,7 @@ void setup() {
   } while(false);
 
   PRINTLN("--- setup init sensors ERROR.. reboot");
+  ERROR_LED(5000);
   while(true) { PRINTLN("."); delay(500); }
 }
 
@@ -91,34 +86,40 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 2U: {
-      if (!nirrcv.presentation())
+      if (!nlmem.presentation())
         return false;
       break;
     }
     case 3U: {
+      if (!nlight.presentation())
+        return false;
+      break;
+    }
+    case 4U: {
+      if (!nlrssi.presentation())
+        return false;
+      break;
+    }
+    case 5U: {
+      if (!nled.presentation())
+        return false;
+      break;
+    }
+    case 6U: {
       if (!nbaro.getReady())
         return false;
       if (!nbaro.presentation())
         return false;
       break;
     }
-    case 4U: {
-      if (!nlight.presentation())
-        return false;
-      break;
-    }
-    case 5U: {
-      if (!nlrssi.presentation())
-        return false;
-      break;
-    }
-    case 6U: {
-      if (!nlmem.presentation())
+    case 7U: {
+      if (!ncmd.presentation())
         return false;
       break;
     }
     default: {
       PRINTLN("-- Wrong number ID\n");
+      ERROR_LED(1000);
       return false;
     }
   }
@@ -133,8 +134,9 @@ void presentation() {
   if ((presentStatus == SENSOR_ID_NONE) || (presentStatus == 0U))
     return;
   
-  while (presentStatus <= 6U) {
+  while (presentStatus <= 7U) {
     if (!presentationStep(presentStatus)) {
+      ERROR_LED(3000);
       PRINTF("--- INIT presentation [%d] ERROR\n", presentStatus);
       ReleaseMutex(&lockInit);
       return;
@@ -148,26 +150,29 @@ void presentation() {
 }
 void loop() {
   if (presentStatus != SENSOR_ID_NONE) {
+    PRINTLN("--- Presentation RETRY");
     presentation();
     if (presentStatus != SENSOR_ID_NONE)
       presentTimer<30>();
 
   } else if (isTransportReady()) {
 
-    ArduinoOTA.handle();
-    nirrcv.data(cnt);
+    OTAHandler();
     nlight.data(cnt);
+    ncmd.data(cnt);
     nbaro.data(cnt);
     nlmem.data(cnt);
     nlrssi.data(cnt);
+    nled.data(cnt);
 
     cnt++;
     if (cnt >= 60000U)
       cnt = 0U;
   } else {
+    ERROR_LED(3000);
     wait(10000);
   }
-  wait(500);
+  wait(100);
 }
 void receive(const MyMessage & msg) {
   if (msg.isAck()) {
@@ -179,14 +184,15 @@ void receive(const MyMessage & msg) {
   /*
   PRINTLN("GW | receive");
    */
+  INFO_LED(1);
 
-  if (nirrcv.data(msg))
-    return;
   if (nlight.data(msg))
     return;
   if (nbaro.data(msg))
     return;
   if (nlmem.data(msg))
+    return;
+  if (ncmd.data(msg))
     return;
   
   (void) nlrssi.data(msg);

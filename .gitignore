@@ -32,6 +32,9 @@
 *.app
 /src/_tmp
 /src/build
+/src/GatewayTest/config.h
+/src/GatewayTest/data/*.crt
+/src/GatewayTest/core/*.h
 /src/Gateway/config.h
 /src/Gateway/data/*.crt
 /src/Gateway/core/*.h

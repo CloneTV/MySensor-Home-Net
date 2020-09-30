@@ -1,18 +1,17 @@
 #if !defined(__MY_SENSOR_I2C_WEATHER_H)
 #define __MY_SENSOR_I2C_WEATHER_H 1
 
+#  if defined(ENABLE_I2C_SENSOR_TEMP)
 #  if defined(ENABLE_LIVE_SENSOR_TEMP)
 #    pragma message "WARNING - do not include 'NodeLiveTemp.h', sensor ID intersect!"
 #  endif
 
 /* ------- WEATHER BMP180/280 I2C ------- */
 
-#  if defined(ENABLE_LIVE_SENSOR_I2C_TEMP)
-
 #  if defined(POLL_WAIT_SECONDS)
 #    undef POLL_WAIT_SECONDS
 #  endif
-#  define POLL_WAIT_SECONDS 8U // 30U
+#  define POLL_WAIT_SECONDS 90U // 30U
 #  define IDX_Staus     0
 #  define IDX_Change    1
 
@@ -164,7 +163,7 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
                 float t_ = bmp->readTemperature(),
                       p_ = (p_raw / 100.0F / 1.333);
                   
-                if (t != t_) {
+                if ((t != t_) || (isAction[IDX_Change])) {
                     t = t_;
                     reportMsg(
                         getTempId(),
@@ -173,7 +172,7 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
                         1U
                     );
                 }
-                if (p != p_) {
+                if ((p != p_) || (isAction[IDX_Change])) {
                     p = p_;
                     reportMsg(
                        getBaroId(),
@@ -197,7 +196,7 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
             }
         }
         bool go_data(const MyMessage & msg) {
-            
+           
             switch (msg.getType()) {
                 case V_TEMP: {
                     if (msg.sensor != getTempId())

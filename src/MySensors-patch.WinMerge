@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+	<paths>
+		<left>E:\__BuildSource\__LIB__\Arduino\Sketch\MySensors-2.4.0-origin\core\</left>
+		<right>E:\__BuildSource\__LIB__\Arduino\Sketch\MySensors-2.4.0\core\</right>
+		<filter>*.*</filter>
+		<subfolders>1</subfolders>
+		<left-readonly>0</left-readonly>
+		<right-readonly>0</right-readonly>
+	</paths>
+</project>

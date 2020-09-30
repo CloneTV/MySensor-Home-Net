@@ -11,6 +11,8 @@
 #include <IRrecv.h>
 #include "Int64String.h"
 
+typedef void (*ir_input_cb)(uint64_t&);
+
 class NodeIrControl : public SensorInterface<NodeIrControl> {
 
     private:
@@ -23,6 +25,7 @@ class NodeIrControl : public SensorInterface<NodeIrControl> {
 #       if defined(ENABLE_SENSOR_IR_RECEIVE)
         IRrecv *irRcv;
         decode_results irdata{};
+        ir_input_cb cb = [](uint64_t&){};
 #       endif
 
         uint8_t getIrRcvId() {
@@ -49,6 +52,11 @@ class NodeIrControl : public SensorInterface<NodeIrControl> {
 #           endif
 #           if defined(ENABLE_SENSOR_IR_SEND)
             delete irSnd;
+#           endif
+        }
+        void setCallBack(ir_input_cb c) {
+#           if defined(ENABLE_SENSOR_IR_RECEIVE)
+            cb = c;
 #           endif
         }
         bool go_init() {
@@ -93,6 +101,7 @@ class NodeIrControl : public SensorInterface<NodeIrControl> {
                        V_IR_RECEIVE,
                        s.c_str()
                     );
+                    cb(irdata.value);
                 }
                 irRcv->resume();
             }
