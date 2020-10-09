@@ -62,7 +62,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             { 109U, LOW, LOW, 0U, 0U, 16734885LLU },          // >
             { 110U, LOW, LOW, 0U, 0U, 16730805LLU },          // ^ down
             { 111U, LOW, LOW, 0U, 0U, 16738455LLU },          // * scenario On
-            { 112U, LOW, LOW, 0U, 0U, 16756815LLU }           // #  scenario Off
+            { 112U, LOW, LOW, 0U, 0U, 16756815LLU }           // # scenario Off
         };
         template<typename T>
         void mqttSend(uint8_t node, uint8_t sensor, mysensors_data_t type, T val) {

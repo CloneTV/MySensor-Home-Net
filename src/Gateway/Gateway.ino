@@ -1,6 +1,5 @@
 
 #include "core/NodeOptions.h"
-#include "core/NodeCommand.h"
 
 mutex_t lockInit{};
 uint8_t presentStatus = 1U;

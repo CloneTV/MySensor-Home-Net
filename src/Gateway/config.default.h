@@ -4,7 +4,6 @@
 
 #  if 0
 
-
 #if !defined(__MY_GW_CONFIG_ESP_H)
 #define __MY_GW_CONFIG_ESP_H 1
 
@@ -14,7 +13,7 @@
 #  define MY_OTA_PASSWD "otapwd"
 /* Firmware ID */
 #  define MY_HOSTNAME "esp8266-Gateway"
-#  define MY_VERSION "1.3"
+#  define MY_VERSION "1.4"
 /* MQTT */
 #  define MY_CONTROLLER_IP_ADDRESS 192, 168, 0, 2
 #  define MY_MQTT_CLIENT_ID "group id"
