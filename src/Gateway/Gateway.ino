@@ -187,18 +187,28 @@ void receive(const MyMessage & msg) {
   /*
   PRINTLN("GW | receive");
    */
-  INFO_LED(1);
+#  if defined(I2C_PCF8574_ENABLE)
+   uint8_t busy = HIGH;
+   nled.infoLed(busy);
+#  endif
 
-  if (nlight.data(msg))
-    return;
-  if (nbaro.data(msg))
-    return;
-  if (nlmem.data(msg))
-    return;
-  if (ncmd.data(msg))
-    return;
-  
-  (void) nlrssi.data(msg);
+  do {
+    if (nlight.data(msg))
+      break;
+    if (nbaro.data(msg))
+      break;
+    if (nlmem.data(msg))
+      break;
+    if (ncmd.data(msg))
+      break;
+    if (nlrssi.data(msg))
+      break;
+  } while (false);
+
+#  if defined(I2C_PCF8574_ENABLE)
+   busy = LOW;
+   nled.infoLed(busy);
+#  endif
 }
 
 // --------------------------------------------------------------------- //
