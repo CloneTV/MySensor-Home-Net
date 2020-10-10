@@ -166,15 +166,19 @@
 #  define SENSOR_POWER_VOLT(A) (A * 0.003363075)
 #  define SENSOR_POWER_PCNT(A) (A / 10)
 
+typedef void (*led_cb_t)(uint8_t);
+
 #  if (defined(LED_DEBUG) && (LED_DEBUG == 1))
 #    define INIT_LED() pinMode(LED_BUILTIN, OUTPUT)
 #    define ERROR_LED(A) __extension__ ({digitalWrite(LED_BUILTIN, HIGH); wait(A); yield(); digitalWrite(LED_BUILTIN, LOW);})
+#    define ERROR_LEDI2C(A,B) ERROR_LED(B)
 #    define INFO_LED(A) __extension__ ({bool b_ = false; uint8_t cnt_ = A; while (--cnt_ > 0U) { digitalWrite(LED_BUILTIN, (b_) ? HIGH : LOW); b_ = !b_; wait(500); yield();};})
 
 #  elif (defined(ESP8266) && defined(I2C_PCF8574_ENABLE))
 #    define INIT_LED()
-#    define ERROR_LED(A) __extension__ ({nled.errorLed(0U); wait(A); yield(); nled.errorLed(255U);})
-#    define INFO_LED(A) __extension__ ({uint8_t cnt_ = A, b_ = LOW; while (--cnt_ > 0U) { nled.infoLed(b_); b_ = ((b_ == LOW) ? HIGH : LOW); wait(500);};})
+#    define ERROR_LED(A) ERROR_LEDI2C(nled.errorLed, A)
+#    define ERROR_LEDI2C(A,B) __extension__ ({ A(LOW); delay(B); A(HIGH); delay(B / 2);})
+#    define INFO_LED(A) __extension__ ({uint8_t cnt_ = A, b_ = HIGH; while (--cnt_ > 0U) { nled.infoLed(b_); b_ = ((b_ == LOW) ? HIGH : LOW); delay(750);} b_ = LOW; nled.infoLed(b_);})
 
 #  else
 #    define INIT_LED()

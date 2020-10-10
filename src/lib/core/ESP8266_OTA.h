@@ -30,7 +30,7 @@ const PROGMEM char * const str_ota[] = {
 };
 #  endif
 
-void OTASetup(const char *myhost, const char *mypwd) {
+void OTASetup(const char *myhost, const char *mypwd, led_cb_t errled) {
    WiFi.mode(WIFI_STA);
    WiFi.begin(
     static_cast<const char*>(MY_WIFI_SSID),
@@ -76,16 +76,17 @@ void OTASetup(const char *myhost, const char *mypwd) {
     PRINT("\n");
   } else {
     PRINTVLN(str_ota[14]);
+    ERROR_LEDI2C(errled, 1000);
     WiFi.beginSmartConfig();
     while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
+      ERROR_LEDI2C(errled, 1000);
       PRINTLN(".");
       PRINTV(WiFi.smartConfigDone());
     }
   }
   if (!MDNS.begin(myhost)) {
     PRINTVLN(str_ota[13]);
-    while (1) delay(1000);
+    while (1) { ERROR_LEDI2C(errled, 2000); }
   }
   MDNS.addService("http", "tcp", 80);
 }

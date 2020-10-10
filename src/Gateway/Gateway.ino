@@ -15,9 +15,26 @@ NodeCommand     ncmd   = NodeCommand();
 void before() {
   Wire.begin(sda_PIN, scl_PIN);
   CreateMutex(&lockInit);
+  if (!nled.init()) {
+    PRINTLN("--- setup I2C leds ERROR.. reboot");
+    while(true) { ERROR_LED(500); }
+  }
+  ledsSetCb(
+      [=](uint8_t & state) { nled.myRxLed(state); },
+      [=](uint8_t & state) { nled.myTxLed(state); },
+      [=](uint8_t & state) { nled.myErrLed(state); }
+  );
+# if defined(MY_INCLUSION_BUTTON_FEATURE)
+  inclusionSetCb(
+      [=]() { return nled.incluseBtn(); },
+      [=](uint8_t & state) { nled.infoLed(state); }
+  );
+# endif
+  INFO_LED(1);
   OTASetup(
     str_firmware[0],
-    static_cast<const char*>(MY_OTA_PASSWD)
+    static_cast<const char*>(MY_OTA_PASSWD),
+    [=](uint8_t val) { nled.errorLed(val); }
   );
   PRINTLN("--- before() END");
 }
@@ -28,19 +45,6 @@ void setup() {
     return;
   }
   do {
-    if (!nled.init())
-      break;
-    ledsSetCb(
-      [=](uint8_t & state) { nled.myRxLed(state); },
-      [=](uint8_t & state) { nled.myTxLed(state); },
-      [=](uint8_t & state) { nled.myErrLed(state); }
-    );
-#   if defined(MY_INCLUSION_BUTTON_FEATURE)
-    inclusionSetCb(
-      [=]() { return nled.incluseBtn(); },
-      [=](uint8_t & state) { nled.infoLed(state); }
-    );
-#   endif
     if (!nbaro.init())
       break;
     if (!nlight.init())
@@ -66,7 +70,7 @@ void setup() {
     );
 #   endif
 
-    INFO_LED(1);
+    INFO_LED(2);
     ReleaseMutex(&lockInit);
     return;
 
@@ -145,7 +149,7 @@ void presentation() {
   }
   presentStatus = SENSOR_ID_NONE;
   ReleaseMutex(&lockInit);
-  INFO_LED(2);
+  INFO_LED(3);
 }
 void loop() {
   if (presentStatus != SENSOR_ID_NONE) {
