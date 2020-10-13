@@ -30,6 +30,14 @@ const PROGMEM char * const str_ota[] = {
 };
 #  endif
 
+void OTAReInit(const char *myhost, led_cb_t errled) {
+  if (!MDNS.begin(myhost)) {
+    PRINTVLN(str_ota[13]);
+    while (1) { ERROR_LEDI2C(errled, 2000); }
+  }
+  MDNS.addService("http", "tcp", 80);
+}
+
 void OTASetup(const char *myhost, const char *mypwd, led_cb_t errled) {
    WiFi.mode(WIFI_STA);
    WiFi.begin(
@@ -77,18 +85,26 @@ void OTASetup(const char *myhost, const char *mypwd, led_cb_t errled) {
   } else {
     PRINTVLN(str_ota[14]);
     ERROR_LEDI2C(errled, 1000);
+    WiFi.disconnect();
     WiFi.beginSmartConfig();
-    while (WiFi.status() != WL_CONNECTED) {
+    uint8_t cnt = 0U;
+    while ((WiFi.status() != WL_CONNECTED) && (++cnt < 200)) {
       ERROR_LEDI2C(errled, 1000);
-      PRINTLN(".");
-      PRINTV(WiFi.smartConfigDone());
+      PRINTV(".");
     }
+    if (WiFi.status() != WL_CONNECTED) {
+      WiFi.disconnect();
+      ESP.restart();
+      while(true) { yield(); };
+    }
+    PRINTV(WiFi.smartConfigDone());
   }
-  if (!MDNS.begin(myhost)) {
-    PRINTVLN(str_ota[13]);
-    while (1) { ERROR_LEDI2C(errled, 2000); }
-  }
-  MDNS.addService("http", "tcp", 80);
+  if (!WiFi.getAutoConnect())
+    WiFi.setAutoConnect(true);
+  if (!WiFi.getAutoReconnect())
+    WiFi.setAutoReconnect(true);
+
+  OTAReInit(myhost, errled);
 }
 
 void OTAHandler() {

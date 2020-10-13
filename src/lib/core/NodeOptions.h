@@ -82,6 +82,14 @@
 // #  define MY_RF24_ENABLE_ENCRYPTION
 // #  define MY_SMART_SLEEP_WAIT_DURATION_MS (2000UL)
 /*
+	0 => 2400 Mhz (RF24 channel 1)
+	1 => 2401 Mhz (RF24 channel 2)
+	76 => 2476 Mhz (RF24 channel 77) standard
+	83 => 2483 Mhz (RF24 channel 84)
+	124 => 2524 Mhz (RF24 channel 125)
+	125 => 2525 Mhz (RF24 channel 126)
+*/
+/*
 	ESP8266 (wemos mini) -> NRF2401
 	D8 - CSN  -> (v+)2
 	D7 - MOSI -> (v+)3
@@ -210,6 +218,9 @@ typedef void (*led_cb_t)(uint8_t);
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
 
+#  if !defined(INTERNAL_LIVE_CMD_REBOOT)
+#    define INTERNAL_LIVE_CMD_REBOOT 243
+#  endif
 #  if !defined(INTERNAL_LIVE_AUTO_FREE_MEM)
 #    define INTERNAL_LIVE_AUTO_FREE_MEM 244
 #  endif

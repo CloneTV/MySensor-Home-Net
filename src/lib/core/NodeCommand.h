@@ -17,6 +17,9 @@ RCSwitch rfSwitch = RCSwitch();
 
 /* ------- BUILD-IN NODE GW COMMAND ------- */
 
+#  define IDX_Change 0
+#  define IDX_Reboot 1
+
 /*
     EventVirtual.n = sensor id
     EventVirtual.s = sensor state
@@ -33,7 +36,10 @@ struct EventVirtualSwitch {
 
 class NodeCommand : public SensorInterface<NodeCommand> {
     private:
-        bool isAction = false;
+        bool isAction[2] = {
+            false,
+            false
+        };
         uint8_t curId = 0U;
 #       if defined(ENABLE_SENSOR_IR_RECEIVE)
         IRrecv *irRcv;
@@ -66,6 +72,9 @@ class NodeCommand : public SensorInterface<NodeCommand> {
         };
         template<typename T>
         void mqttSend(uint8_t node, uint8_t sensor, mysensors_data_t type, T val) {
+
+            if (WiFi.status() != WL_CONNECTED)
+                return;
 
             MyMessage msg(sensor, type);
             msg.sender = node;
@@ -110,7 +119,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             curId = idx;
             ev[idx].s = val;
             ev[idx].e = HIGH;
-            isAction = ((isAction) ? isAction : true);
+            isAction[IDX_Change] = ((isAction[IDX_Change]) ? isAction[IDX_Change] : true);
         }
         void setMqttEvent(uint8_t & idx, uint8_t val = LOW) {
             switch (ev[idx].irid) {
@@ -156,6 +165,9 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 case 16750695LLU:       /* scenario OffAll (0) Group (97) */
                 case 16756815LLU:       /* scenario Off (#) Group (65) */
                 case 16738455LLU: {     /* scenario On (*) Group (65) */
+                    if (WiFi.status() != WL_CONNECTED)
+                        break;
+
                     HTTPClient http;
                     const char *uri, *payload;
                     switch (ev[idx].irid) {
@@ -193,6 +205,9 @@ class NodeCommand : public SensorInterface<NodeCommand> {
         }
         uint8_t getIrRcvId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_IR_RECEIVE);
+        }
+        uint8_t getRebootBtnId() {
+            return static_cast<uint8_t>(INTERNAL_LIVE_CMD_REBOOT);
         }
 
     public:
@@ -232,11 +247,17 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 if (!presentSend(ev[i].n, V_STATUS))
                     return false;
             }
-#           if defined(ENABLE_SENSOR_IR_RECEIVE)
-            uint8_t rid = getIrRcvId();
-            if (!presentSend(rid, S_IR))
+            uint8_t id = getRebootBtnId();
+            if (!presentSend(id, S_BINARY, "Sys.Reboot"))
               return false;
-            if (!presentSend(rid, V_IR_RECEIVE))
+            if (!presentSend(id, V_STATUS))
+              return false;
+
+#           if defined(ENABLE_SENSOR_IR_RECEIVE)
+            id = getIrRcvId();
+            if (!presentSend(id, S_IR))
+              return false;
+            if (!presentSend(id, V_IR_RECEIVE))
               return false;
 #           endif
             return true;
@@ -247,13 +268,16 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             if (irRcv->decode(&irdata)) {
                 /// NEC only, ToDo: more standarts..
                 if ((irdata.decode_type == NEC) && (irdata.bits == 32U) && (irdata.value != -1ULL)) {
+                    
+                    if (WiFi.status() == WL_CONNECTED) {
+                        String s = Int64ToString(irdata.value, HEX, true);
+                        reportMsg(
+                            getIrRcvId(),
+                            V_IR_RECEIVE,
+                            s.c_str()
+                        );
+                    }
 
-                    String s = Int64ToString(irdata.value, HEX, true);
-                    reportMsg(
-                       getIrRcvId(),
-                       V_IR_RECEIVE,
-                       s.c_str()
-                    );
                     uint8_t idx = checkIrCode(irdata.value);
                     if (idx != SENSOR_ID_NONE)
                         setEvent(idx, ((ev[idx].s == LOW) ? HIGH : LOW));
@@ -261,8 +285,8 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 irRcv->resume();
             }
 #           endif
-            if (isAction) {
-                isAction = false;
+            if (isAction[IDX_Change]) {
+                isAction[IDX_Change] = false;
                 
                 for (uint8_t i = 0U; i < __NELE(ev); i++) {
                     if (ev[i].n >= 100U)
@@ -272,9 +296,18 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                             rfSwitch.send(ev[i].rfid, 24);
                         ev[i].e = LOW;
                         saveState(ev[i].n, ev[i].s);
-                        reportMsg(ev[i].n, V_STATUS, static_cast<bool>(ev[i].s));
+                        if (WiFi.status() == WL_CONNECTED)
+                            reportMsg(ev[i].n, V_STATUS, static_cast<bool>(ev[i].s));
                     }
                 }
+            }
+            if (isAction[IDX_Reboot]) {
+                isAction[IDX_Reboot] = false;
+                if (WiFi.status() == WL_CONNECTED)
+                    reportMsg(getRebootBtnId(), V_STATUS, false);
+                delay(500);
+                ESP.restart();
+                while(true) { yield(); };
             }
         }
         bool go_data(const MyMessage & msg) {
@@ -284,6 +317,10 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             uint8_t idx;
             switch (msg.getType()) {
                 case V_STATUS: {
+                    if (msg.sensor == getRebootBtnId()) {
+                        isAction[IDX_Reboot] = msg.getBool();
+                        break;
+                    }
                     idx = checkId(msg.sensor);
                     if (idx == SENSOR_ID_NONE)
                         return false;
@@ -308,5 +345,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
         }
 };
 
+#  undef IDX_Change
+#  undef IDX_Reboot
 #  endif
 #endif

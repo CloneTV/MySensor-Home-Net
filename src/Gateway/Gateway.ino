@@ -1,6 +1,7 @@
 
 #include "core/NodeOptions.h"
 
+bool isConnect = true;
 mutex_t lockInit{};
 uint8_t presentStatus = 1U;
 uint16_t cnt = 0;
@@ -160,13 +161,30 @@ void loop() {
 
   } else if (isTransportReady()) {
 
-    OTAHandler();
-    nlight.data(cnt);
+    do {
+      if (WiFi.status() != WL_CONNECTED) {
+        isConnect = false;
+        break;
+      }
+      
+      OTAHandler();
+      nlight.data(cnt);
+      nbaro.data(cnt);
+      nlmem.data(cnt);
+      nlrssi.data(cnt);
+      nled.data(cnt);
+
+    } while (0);
+
     ncmd.data(cnt);
-    nbaro.data(cnt);
-    nlmem.data(cnt);
-    nlrssi.data(cnt);
-    nled.data(cnt);
+
+    if ((WiFi.status() == WL_CONNECTED) && (!isConnect)) {
+      isConnect = true;
+      OTAReInit(
+        str_firmware[0],
+        [=](uint8_t val) { nled.errorLed(val); }
+      );
+    }
 
     cnt++;
     if (cnt >= 60000U)
