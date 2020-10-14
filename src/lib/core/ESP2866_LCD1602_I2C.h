@@ -16,7 +16,7 @@
 #define LCD_CLEARDISPLAY 0x01
 #define LCD_RETURNHOME 0x02
 #define LCD_ENTRYMODESET 0x04
-#define LCDDISPLAYCONTROL__ 0x08
+#define LCD_DISPLAYCONTROL 0x08
 #define LCD_CURSORSHIFT 0x10
 #define LCD_FUNCTIONSET 0x20
 #define LCD_SETCGRAMADDR 0x40
@@ -65,6 +65,7 @@ template <uint8_t const LCD_ADDR = 0x27,
 	  uint8_t const I2CP_SDA = 4U,    uint8_t const I2CP_SCL = 5U>
 class ESP2866_LCD1602_I2C : public Print {
 	private:
+  bool isSuccessfully;
 	uint8_t displayfunction__;
 	uint8_t displaycontrol__;
 	uint8_t displaymode__;
@@ -73,16 +74,24 @@ class ESP2866_LCD1602_I2C : public Print {
   public:
 	ESP2866_LCD1602_I2C() {
 		backlightval__ = LCD_BACKLIGHT;
+    isSuccessfully = false;
 	}
 	~ESP2866_LCD1602_I2C() {
 		clear();
 		display(false);
 	}
-	void begin(uint8_t charsize = LCD_5x8DOTS) {
+  operator bool() const {
+    return isSuccessfully;
+  }
+	bool begin(uint8_t charsize = LCD_5x8DOTS) {
 #		if (defined(WIRE_INIT_ENABLE) && (WIRE_INIT_ENABLE > 0))
 		Wire.begin(I2CP_SDA, I2CP_SCL);
-		delay(50); 
+		delay(150);
 #		endif
+    Wire.beginTransmission(LCD_ADDR);
+    if (Wire.endTransmission() != 0)
+      return isSuccessfully;
+
 		displayfunction__ = LCD_4BITMODE | LCD_1LINE | charsize;
 
 		if (LCD_ROWS > 1U) {
@@ -100,6 +109,8 @@ class ESP2866_LCD1602_I2C : public Print {
 		displaymode__ = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
 		lcd_command_(LCD_ENTRYMODESET | displaymode__);
 		home();
+    isSuccessfully = true;
+    return isSuccessfully;
 	}
 	void clear(bool b = true) {
 		lcd_command_(LCD_CLEARDISPLAY);
@@ -116,14 +127,14 @@ class ESP2866_LCD1602_I2C : public Print {
 			displaycontrol__ |= LCD_DISPLAYON;
 		else
 			displaycontrol__ &= ~LCD_DISPLAYON;
-		lcd_command_(LCDDISPLAYCONTROL__ | displaycontrol__);
+		lcd_command_(LCD_DISPLAYCONTROL | displaycontrol__);
 	}
 	void cursor(bool b = true) {
 		if (b)
 			displaycontrol__ |= LCD_CURSORON;
 		else
 			displaycontrol__ &= ~LCD_CURSORON;
-		lcd_command_(LCDDISPLAYCONTROL__ | displaycontrol__);
+		lcd_command_(LCD_DISPLAYCONTROL | displaycontrol__);
 	}
 	void cursor(uint8_t col, uint8_t row) {
 		int16_t offsets[] = { 0x00, 0x40, 0x14, 0x54 };
@@ -137,7 +148,7 @@ class ESP2866_LCD1602_I2C : public Print {
 			displaycontrol__ |= LCD_BLINKON;
 		else
 			displaycontrol__ &= ~LCD_BLINKON;
-		lcd_command_(LCDDISPLAYCONTROL__ | displaycontrol__);
+		lcd_command_(LCD_DISPLAYCONTROL | displaycontrol__);
 	}
 	void leftOrRight(bool b = true) {
 		if (b)
