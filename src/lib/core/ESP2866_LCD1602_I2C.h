@@ -80,22 +80,18 @@ class ESP2866_LCD1602_I2C : public Print {
 	void begin(uint8_t charsize = LCD_5x8DOTS) {
 #		if (defined(WIRE_INIT_ENABLE) && (WIRE_INIT_ENABLE > 0))
 		Wire.begin(I2CP_SDA, I2CP_SCL);
+		delay(50); 
 #		endif
 		displayfunction__ = LCD_4BITMODE | LCD_1LINE | charsize;
 
 		if (LCD_ROWS > 1U) {
 			displayfunction__ |= LCD_2LINE;
 		}
-		delay(50); 
-		lcd_expanderWrite_(backlightval__);
-		delay(1000);
-		lcd_write4bits_(0x03 << 4);
-		delayMicroseconds(4500);
-		lcd_write4bits_(0x03 << 4);
-		delayMicroseconds(4500);
-		lcd_write4bits_(0x03 << 4);
-		delayMicroseconds(150);
-		lcd_write4bits_(0x02 << 4);
+		lcd_expanderWrite_(backlightval__); delay(1000);
+		lcd_write4bits_(0x03 << 4); delayMicroseconds(4500);
+		lcd_write4bits_(0x03 << 4); delayMicroseconds(4500);
+		lcd_write4bits_(0x03 << 4); delayMicroseconds(150);
+		lcd_write4bits_(0x02 << 4); delayMicroseconds(150);
 		lcd_command_(LCD_FUNCTIONSET | displayfunction__);
 		displaycontrol__ = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
 		display();
