@@ -53,11 +53,12 @@
 	 *
 	 * @param LCD_ADDR	I2C slave address of the LCD display. Most likely printed on the
 	 *			LCD circuit board, or look in the supplied LCD documentation.
+	 *			default: 0x27
 	 * @param LCD_COLUMS	Number of columns your LCD display has.
 	 * @param LCD_ROWS	Number of rows your LCD display has.
 	 * @param I2CP_SDA	I2C SDA pin.
 	 * @param I2CP_SCL	I2C SCL pin.
-	 */
+	 **/
 
 template <uint8_t const LCD_ADDR = 0x27,
 	  uint8_t const LCD_COLUMS = 16U, uint8_t const LCD_ROWS = 2U,
@@ -172,23 +173,23 @@ class ESP2866_LCD1602_I2C : public Print {
 			write(charmap[i]);
 	}
 	// virtual size_t Print::write(uint8_t)
-	size_t write(uint8_t value) {
-		lcd_send_(value, Rs);
+	size_t write(uint8_t val) {
+		lcd_send_(val, Rs);
 	}
 
 	private:
-	void lcd_command_(uint8_t value) {
-		lcd_send_(value, 0);
+	void lcd_command_(uint8_t val) {
+		lcd_send_(val, 0);
 	}
-	void lcd_send_(uint8_t value, uint8_t mode) {
-		uint8_t highnib = (value & 0xf0);
-		uint8_t lownib = ((value<<4) & 0xf0);
+	void lcd_send_(uint8_t val, uint8_t mode) {
+		uint8_t highnib = (val & 0xf0);
+		uint8_t lownib = ((val << 4) & 0xf0);
 		lcd_write4bits_((highnib) | mode);
 		lcd_write4bits_((lownib)  | mode);
 	}
-	void lcd_write4bits_(uint8_t value) {
-		lcd_expanderWrite_(value);
-		lcd_pulseEnable_(value);
+	void lcd_write4bits_(uint8_t val) {
+		lcd_expanderWrite_(val);
+		lcd_pulseEnable_(val);
 	}
 	void lcd_expanderWrite_(uint8_t _data) {                                        
 		Wire.beginTransmission(LCD_ADDR);
