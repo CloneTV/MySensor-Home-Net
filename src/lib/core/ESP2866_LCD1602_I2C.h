@@ -1,7 +1,25 @@
 #if !defined(ESP2866_LCD1602_I2C_H)
 #define ESP2866_LCD1602_I2C_H
 
+/* initialize Wire from this class */
 //#define WIRE_INIT_ENABLE 1
+
+/* I2C LCD 1602 displays.
+ * Supports reconnection in external code,
+ * using check() and begin()
+ * example:
+ * 
+ *   bool isdisconnect = false;
+ *      void checklcd() {
+ *         if (!i2c1602->check()) {
+ *           if (!isdisconnect) {
+ *             isdisconnect = true;
+ *           }
+ *         } else if (isdisconnect) {
+ *           isdisconnect = !i2c1602->begin();
+ *         }
+ *      }
+ */
 
 #  if (defined(ESP2866) || defined(ESP32))
 #    include <ESP.h>
@@ -64,38 +82,52 @@ template <uint8_t const LCD_ADDR = 0x27,
 	  uint8_t const LCD_COLUMS = 16U, uint8_t const LCD_ROWS = 2U,
 	  uint8_t const I2CP_SDA = 4U,    uint8_t const I2CP_SCL = 5U>
 class ESP2866_LCD1602_I2C : public Print {
-	private:
-  bool isSuccessfully;
+  private:
+	bool isSuccessfully;
 	uint8_t displayfunction__;
 	uint8_t displaycontrol__;
 	uint8_t displaymode__;
 	uint8_t backlightval__;
 
   public:
-	ESP2866_LCD1602_I2C() {
-		backlightval__ = LCD_BACKLIGHT;
+  ESP2866_LCD1602_I2C() {
+    backlightval__ = LCD_BACKLIGHT;
     isSuccessfully = false;
-	}
-	~ESP2866_LCD1602_I2C() {
-		clear();
-		display(false);
-	}
+  }
+  ~ESP2866_LCD1602_I2C() {
+    clear();
+    display(false);
+  }
   operator bool() const {
     return isSuccessfully;
   }
-	bool begin(uint8_t charsize = LCD_5x8DOTS) {
-#		if (defined(WIRE_INIT_ENABLE) && (WIRE_INIT_ENABLE > 0))
-		Wire.begin(I2CP_SDA, I2CP_SCL);
-		delay(150);
-#		endif
+  bool check() {
     Wire.beginTransmission(LCD_ADDR);
     if (Wire.endTransmission() != 0)
+		isSuccessfully = false;
+	else if (!isSuccessfully)
+		isSuccessfully = true;
+	return isSuccessfully;
+  }
+  bool begin(uint8_t charsize = LCD_5x8DOTS) {
+#	if (defined(WIRE_INIT_ENABLE) && (WIRE_INIT_ENABLE > 0))
+	Wire.begin(I2CP_SDA, I2CP_SCL);
+	delay(150);
+#	endif
+    if (!check())
       return isSuccessfully;
 
-		displayfunction__ = LCD_4BITMODE | LCD_1LINE | charsize;
+		displayfunction__ = LCD_4BITMODE;
 
 		if (LCD_ROWS > 1U) {
 			displayfunction__ |= LCD_2LINE;
+      displayfunction__ |= charsize;
+		}	else if (LCD_ROWS == 1U) {
+      displayfunction__ |= LCD_1LINE;
+			if (charsize == LCD_5x8DOTS)
+        displayfunction__ |= LCD_5x10DOTS;
+      else
+        displayfunction__ |= charsize;
 		}
 		lcd_expanderWrite_(backlightval__); delay(1000);
 		lcd_write4bits_(0x03 << 4); delayMicroseconds(4500);
