@@ -52,16 +52,16 @@
 	 * Template construct
 	 *
 	 * @param LCD_ADDR	I2C slave address of the LCD display. Most likely printed on the
-	 *					LCD circuit board, or look in the supplied LCD documentation.
+	 *			LCD circuit board, or look in the supplied LCD documentation.
 	 * @param LCD_COLUMS	Number of columns your LCD display has.
 	 * @param LCD_ROWS	Number of rows your LCD display has.
 	 * @param I2CP_SDA	I2C SDA pin.
 	 * @param I2CP_SCL	I2C SCL pin.
 	 */
 
-template <unsigned char const LCD_ADDR = 0x27,
-	unsigned char const LCD_COLUMS = 16U, unsigned char const LCD_ROWS = 2U,
-	unsigned char const I2CP_SDA = 4U,   unsigned char const I2CP_SCL = 5U>
+template <uint8_t const LCD_ADDR = 0x27,
+	  uint8_t const LCD_COLUMS = 16U, uint8_t const LCD_ROWS = 2U,
+	  uint8_t const I2CP_SDA = 4U,    uint8_t const I2CP_SCL = 5U>
 class ESP2866_LCD1602_I2C : public Print {
 	private:
 	uint8_t displayfunction__;
