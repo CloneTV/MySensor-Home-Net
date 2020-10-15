@@ -17,7 +17,4 @@
 #  define WRX 3   // -- (RX Serial)
 #  define WA0 A0  // Lighting resistor
 
-static const uint8_t scl_PIN = WD1;
-static const uint8_t sda_PIN = WD2;
-
 #endif

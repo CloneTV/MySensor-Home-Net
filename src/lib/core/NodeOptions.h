@@ -22,6 +22,7 @@
 #    define __AVR_INTERNAL_LIVE_COMPATIBLE__ 1
 #  endif
 
+#  include "I2CDefine.h"
 #  include "../config.h"
 
 /* INCLUSION BUTTON, LEDS */
@@ -29,7 +30,6 @@
 #    define MY_DEFAULT_LED_I2C 1
 #    if defined(MY_INCLUSION_BUTTON_FEATURE)
 #      define MY_INCLUSION_MODE_FEATURE
-#      define MY_INCLUSION_BUTTON_FEATURE
 #      define MY_INCLUSION_MODE_DURATION 10
 #      define MY_INCLUSION_BUTTON_TIMEOUT 500
 #    endif
@@ -195,6 +195,9 @@ typedef void (*led_cb_t)(uint8_t);
 #  endif
 
 /* LOCAL BMP180/BMP280 SENSOR */
+#  if defined(BMP280_ADDRESS)
+#    undef BMP280_ADDRESS
+#  endif
 #  define BMP280_ADDRESS 0x76
 #  define BMP280_ALTITUDE_DEFAULT 1013.25
 #  define BMP280_ALTITUDE_INT 101325

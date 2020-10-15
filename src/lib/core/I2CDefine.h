@@ -37,4 +37,7 @@ ESP2866              4  (SDA), 5  (SCL), 14, 15
 #    error "AVR_AT90U - don't understand I2C pin.."
 #  endif
 
+static const uint8_t scl_PIN = DEF_SCL;
+static const uint8_t sda_PIN = DEF_SDA;
+
 #endif

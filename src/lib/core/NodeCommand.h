@@ -3,17 +3,17 @@
 #define __MY_SENSOR_NODE_CMD_H 1
 
 #  if defined(ENABLE_SENSOR_RF433)
-#  define RCSwitchDisableReceiving 1
-#  include <RCSwitch.h>
+#  include "ESP8266_RF433T.h"
 #  include "Int64String.h"
-RCSwitch rfSwitch = RCSwitch();
 
 #  if defined(ENABLE_SENSOR_IR)
 #    include <IRremoteESP8266.h>
 #    include <IRrecv.h>
 #  endif
 
-#include <ESP8266HTTPClient.h>
+#  if defined(USE_MY_CONTROLLER_GROUP)
+#    include <ESP8266HTTPClient.h>
+#  endif
 
 /* ------- BUILD-IN NODE GW COMMAND ------- */
 
@@ -41,34 +41,46 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             false
         };
         uint8_t curId = 0U;
+        unsigned long startOffset = 0U;
+        ESP8266_RF433T<> *rf433;
 #       if defined(ENABLE_SENSOR_IR_RECEIVE)
         IRrecv *irRcv;
         decode_results irdata{};
 #       endif
+#       if (defined(CMD_GROUP_MY_CONTROLLER) && (CMD_GROUP_MY_CONTROLLER > 0))
         const char *uri_on = CMD_GROUP_URI_ON;
         const char *uri_off = CMD_GROUP_URI_OFF;
         const char *payload_65 = "[65]";
         const char *payload_97 = "[97]";
+#       endif
         EventVirtualSwitch ev[17] = {
-            { 1U,   LOW, LOW, 0U, 5180193U, 16712445LLU },    // 5
-            { 2U,   LOW, LOW, 0U, 5180194U, 16761405LLU },    // 6
-            { 3U,   LOW, LOW, 0U, 0U, 16769055LLU },          // 7
-            { 4U,   LOW, LOW, 0U, 0U, 16754775LLU },          // 8
-            { 5U,   LOW, LOW, 0U, 0U, 16748655LLU },          // 9
+            { 1U,   LOW, LOW, 0U, 5180193U, 16712445LLU },     // (0)  5 // switch 1 5180193/5180194
+            { 2U,   LOW, LOW, 0U, 5180194U, 16761405LLU },     // (1)  6
+            { 3U,   LOW, LOW, 0U, 3276321U, 16769055LLU },     // (2)  7 // switch 2 3276321/3276322
+            { 4U,   LOW, LOW, 0U, 3276322U, 16754775LLU },     // (3)  8
+            { 5U,   LOW, LOW, 0U, 750369U,  16748655LLU },     // (4)  9 // switch 3 750369/750370
 
-            { 102U, LOW, 4U,  0U, 0U, 16753245LLU },          // 1
-            { 103U, LOW, 3U,  0U, 0U, 16736925LLU },          // 2
-            { 104U, LOW, 0U,  0U, 0U, 16769565LLU },          // 3
-            { 105U, LOW, 1U,  0U, 0U, 16720605LLU },          // 4
+#           if (defined(CMD_GROUP_MY_CONTROLLER) && (CMD_GROUP_MY_CONTROLLER > 0))
+#           define SCENE_START_ID 100U
+            { 111U,  LOW, LOW, 0U, 0U, 16726215LLU },          // (5)  OK
+            { 112U,  LOW, LOW, 0U, 0U, 16738455LLU },          // (6)  * scenario On
+#           else
+#           define SCENE_START_ID 10U
+            { 10U,  LOW, LOW, 0U, 0U, 16726215LLU },           // (5)  OK
+            { 11U,  LOW, LOW, 0U, 0U, 16738455LLU },           // (6)  * scenario On
+#           endif
+            { 101U, LOW, LOW, 0U, 0U, 16756815LLU },           // (7)  # scenario Off
+            { 106U, LOW, LOW, 0U, 0U, 16750695LLU },           // (8)  0
 
-            { 101U, LOW, LOW, 0U, 0U, 16750695LLU },          // 0
-            { 106U, LOW, LOW, 0U, 0U, 16726215LLU },          // OK
-            { 107U, LOW, LOW, 0U, 0U, 16718055LLU },          // ^ up
-            { 108U, LOW, LOW, 0U, 0U, 16716015LLU },          // <
-            { 109U, LOW, LOW, 0U, 0U, 16734885LLU },          // >
-            { 110U, LOW, LOW, 0U, 0U, 16730805LLU },          // ^ down
-            { 111U, LOW, LOW, 0U, 0U, 16738455LLU },          // * scenario On
-            { 112U, LOW, LOW, 0U, 0U, 16756815LLU }           // # scenario Off
+            { 102U, LOW, 4U,  0U, 0U, 16753245LLU },           // (9)  1
+            { 103U, LOW, 3U,  0U, 0U, 16736925LLU },           // (10) 2
+            { 104U, LOW, 0U,  0U, 0U, 16769565LLU },           // (11) 3
+            { 105U, LOW, 1U,  0U, 0U, 16720605LLU },           // (12) 4
+
+            { 107U, LOW, LOW, 0U, 0U, 16718055LLU },           // (13) ^ up
+            { 108U, LOW, LOW, 0U, 0U, 16716015LLU },           // (14) <
+            { 109U, LOW, LOW, 0U, 0U, 16734885LLU },           // (15) >
+            { 110U, LOW, LOW, 0U, 0U, 16730805LLU }            // (16) ^ down
         };
         template<typename T>
         void mqttSend(uint8_t node, uint8_t sensor, mysensors_data_t type, T val) {
@@ -161,13 +173,15 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                     mqttSend(22U, ev[idx].e, V_STATUS, val);
                     break;
                 }
-                case 16726215LLU:       /* scenario OnAll (OK) Group (97) */
-                case 16750695LLU:       /* scenario OffAll (0) Group (97) */
-                case 16756815LLU:       /* scenario Off (#) Group (65) */
-                case 16738455LLU: {     /* scenario On (*) Group (65) */
+                case 16726215LLU:       /* scenario OnAll (OK) Group (97)/Scene 10 */
+                case 16750695LLU:       /* scenario OffAll (0) Group (97)/Scene 10 */
+                case 16756815LLU:       /* scenario Off (#) Group (65)/Scene 11 */
+                case 16738455LLU: {     /* scenario On (*) Group (65)/Scene 11 */
                     if (WiFi.status() != WL_CONNECTED)
                         break;
-
+                    
+#                   if (defined(CMD_GROUP_MY_CONTROLLER) && (CMD_GROUP_MY_CONTROLLER > 0))
+                    /* Group  65, 97 */
                     HTTPClient http;
                     const char *uri, *payload;
                     switch (ev[idx].irid) {
@@ -197,6 +211,19 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                     http.addHeader(F("Content-Type"), F("application/json"));
                     http.addHeader(F("Authorization"), "Basic " CMD_GROUP_AUTH, true);
                     (void) http.POST(payload);
+#                   else
+                    /* Scene  10,11 */
+                    uint8_t scid, scstatus;
+                    switch (ev[idx].irid) {
+                        case 16726215LLU: { scid = 5U; scstatus = HIGH; break; } /* Scene 10 On */
+                        case 16750695LLU: { scid = 5U; scstatus = LOW; break;  } /* Scene 10 Off */
+                        case 16738455LLU: { scid = 6U; scstatus = HIGH; break; } /* Scene 11 On */
+                        case 16756815LLU: { scid = 6U; scstatus = LOW; break;  } /* Scene 11 Off */
+                        default: return;
+                    }
+                    ev[scid].s = scstatus;
+                    setEvent(scid, scstatus);
+#                   endif
                     break;
                 }
                 default:
@@ -212,12 +239,14 @@ class NodeCommand : public SensorInterface<NodeCommand> {
 
     public:
         NodeCommand() {
+            rf433 = new ESP8266_RF433T<>();
 #           if defined(ENABLE_SENSOR_IR_RECEIVE)
             pinMode(INTERNAL_LIVE_IR_RECEIVE_PIN, INPUT);
             irRcv = new IRrecv(INTERNAL_LIVE_IR_RECEIVE_PIN);
 #           endif
         }
         ~NodeCommand() {
+            delete rf433;
 #           if defined(ENABLE_SENSOR_IR_RECEIVE)
             delete irRcv;
 #           endif
@@ -226,26 +255,40 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             
         }
         bool go_init() {
-            rfSwitch.enableTransmit(INTERNAL_RF433_PIN);
+            rf433->transmit(true);
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
                 if (ev[i].n >= 100U)
                     break;
-                if (ev[i].rfid)
-                    ev[i].s = loadState(ev[i].n);
+                ev[i].s = loadState(ev[i].n);
             }
 #           if defined(ENABLE_SENSOR_IR_RECEIVE)
             irRcv->enableIRIn();
 #           endif
             return true;
+            startOffset = millis() + 60000U;
         }
         bool go_presentation() {
+            if (WiFi.status() != WL_CONNECTED)
+                return false;
+
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
                 if (ev[i].n >= 100U)
                     break;
-                if (!presentSend(ev[i].n, S_BINARY, "Relay.Virtual.Lights"))
-                    return false;
-                if (!presentSend(ev[i].n, V_STATUS))
-                    return false;
+                if ((ev[i].rfid) && (ev[i].n < SCENE_START_ID)) {
+                    PRINTF("-- go_presentation/Relay: %u\n", ev[i].n);
+                    if (!presentSend(ev[i].n, S_BINARY, "Relay.Virtual.Lights"))
+                        return false;
+                    if (!presentSend(ev[i].n, V_STATUS))
+                        return false;
+                } else if (ev[i].n >= SCENE_START_ID) {
+                    PRINTF("-- go_presentation/Scene: %u\n", ev[i].n);
+                    if (!presentSend(ev[i].n, S_SCENE_CONTROLLER, "Scene.Virtual.Switch"))
+                        return false;
+                    if (!presentSend(ev[i].n, V_SCENE_ON))
+                        return false;
+                    ev[i].s = LOW;
+                    ev[i].e = HIGH;
+                }
             }
             uint8_t id = getRebootBtnId();
             if (!presentSend(id, S_BINARY, "Sys.Reboot"))
@@ -291,20 +334,34 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 for (uint8_t i = 0U; i < __NELE(ev); i++) {
                     if (ev[i].n >= 100U)
                         break;
-                    if (ev[i].e == HIGH) {
-                        if (ev[i].rfid)
-                            rfSwitch.send(ev[i].rfid, 24);
-                        ev[i].e = LOW;
-                        saveState(ev[i].n, ev[i].s);
-                        if (WiFi.status() == WL_CONNECTED)
-                            reportMsg(ev[i].n, V_STATUS, static_cast<bool>(ev[i].s));
+                    
+                    if (ev[i].e != HIGH)
+                        continue;
+                    ev[i].e = LOW;
+                    mysensors_data_t tdata;
+
+                    if ((ev[i].rfid) && (ev[i].n < SCENE_START_ID)) {
+                        tdata = V_STATUS;
+                        rf433->send(ev[i].rfid, 24);
+
+                    } else if (ev[i].n >= SCENE_START_ID) {
+                        tdata = V_SCENE_ON;
+                    } else {
+                        continue;
                     }
+                    saveState(ev[i].n, ev[i].s);
+                    if (WiFi.status() == WL_CONNECTED)
+                        reportMsg(ev[i].n, tdata, static_cast<bool>(ev[i].s));
                 }
             }
             if (isAction[IDX_Reboot]) {
                 isAction[IDX_Reboot] = false;
+                PRINTF("-- Reboot received! %d = (),  %lu/%lu\n", WiFi.status(), WL_CONNECTED, startOffset, millis());
+
                 if (WiFi.status() == WL_CONNECTED)
                     reportMsg(getRebootBtnId(), V_STATUS, false);
+                if (startOffset >= millis())
+                    return;
                 delay(500);
                 ESP.restart();
                 while(true) { yield(); };
@@ -316,8 +373,11 @@ class NodeCommand : public SensorInterface<NodeCommand> {
 
             uint8_t idx;
             switch (msg.getType()) {
-                case V_STATUS: {
-                    if (msg.sensor == getRebootBtnId()) {
+                case V_STATUS:
+                case V_SCENE_ON:
+                case V_SCENE_OFF: {
+                    if ((msg.sensor == getRebootBtnId()) &&
+                        (msg.getType() == V_STATUS)) {
                         isAction[IDX_Reboot] = msg.getBool();
                         break;
                     }

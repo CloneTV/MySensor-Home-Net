@@ -22,6 +22,7 @@
 // #  define MY_MQTT_CLIENT_PUBLISH_RETAIN
 
 /* COMMAND MODE (NodeCommand.h - MyController API) */
+#  define CMD_GROUP_MY_CONTROLLER 0
 #  define CMD_GROUP_HOST "192.168.0.105"
 #  define CMD_GROUP_PORT 8081
 #  define CMD_GROUP_AUTH "Base64 'login:password' string"

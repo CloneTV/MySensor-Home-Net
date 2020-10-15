@@ -1,6 +1,6 @@
 {
     "sketch": "Gateway.ino",
-    "port": "COM11",
+    "port": "COM13",
     "board": "esp8266:esp8266:d1",
     "output": "../build",
     "debugger": "jlink",

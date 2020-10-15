@@ -22,7 +22,4 @@
 #  define WD15 5  // SCL (I2C) -- dup
 #  define WA0 A0  // Lighting resistor
 
-static const uint8_t scl_PIN = WD3;
-static const uint8_t sda_PIN = WD4;
-
 #endif
