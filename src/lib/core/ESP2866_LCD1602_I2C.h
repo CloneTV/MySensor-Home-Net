@@ -31,6 +31,17 @@
 #  include <inttypes.h>
 #  include <Wire.h>
 
+/* 
+ * behavior: using include "I2CDefine.h" from:
+ * https://github.com/CloneTV/ESP2866-ESP32-I2C-device-LCD-display-scanner
+ */
+#  if !defined(DEF_SCL)
+#    define DEF_SCL 5U
+#  endif
+#  if !defined(DEF_SDA)
+#    define DEF_SDA 4U
+#  endif
+
 #define LCD_CLEARDISPLAY 0x01
 #define LCD_RETURNHOME 0x02
 #define LCD_ENTRYMODESET 0x04
@@ -79,8 +90,8 @@
 	 **/
 
 template <uint8_t const LCD_ADDR = 0x27,
-	  uint8_t const LCD_COLUMS = 16U, uint8_t const LCD_ROWS = 2U,
-	  uint8_t const I2CP_SDA = 4U,    uint8_t const I2CP_SCL = 5U>
+	  uint8_t const LCD_COLUMS = 16U,   uint8_t const LCD_ROWS = 2U,
+	  uint8_t const I2CP_SDA = DEF_SDA, uint8_t const I2CP_SCL = DEF_SCL>
 class ESP2866_LCD1602_I2C : public Print {
   private:
 	bool isSuccessfully;
@@ -107,6 +118,7 @@ class ESP2866_LCD1602_I2C : public Print {
 		isSuccessfully = false;
 	else if (!isSuccessfully)
 		isSuccessfully = true;
+	Wire.endTransmission();
 	return isSuccessfully;
   }
   bool begin(uint8_t charsize = LCD_5x8DOTS) {
