@@ -309,8 +309,12 @@ const PROGMEM char * const str_firmware[] = {
 #       define ENABLE_I2C_SENSOR_TEMP 1
 #       include "NodeI2CWeather.h"
 #     else
-#       define MY_AVR_TEMPERATURE_OFFSET 334
-#       define MY_AVR_TEMPERATURE_GAIN 0.1
+#       if !defined(MY_AVR_TEMPERATURE_OFFSET)
+#         define MY_AVR_TEMPERATURE_OFFSET 334
+#       endif
+#       if !defined(MY_AVR_TEMPERATURE_GAIN)
+#         define MY_AVR_TEMPERATURE_GAIN 0.1
+#       endif
 #       define ENABLE_LIVE_SENSOR_TEMP 1
 #       include "NodeLiveTemp.h"
 #     endif
@@ -351,7 +355,7 @@ const PROGMEM char * const str_firmware[] = {
 #   if (defined(ENABLE_SENSOR_IR_SEND) || defined(ENABLE_SENSOR_IR_RECEIVE))
 #     define ENABLE_SENSOR_IR 1
 #   endif
-#   if (INTERNAL_RF433_PIN >= 0)
+#   if (defined(INTERNAL_RF433_PIN) && (INTERNAL_RF433_PIN >= 0))
 #     define ENABLE_SENSOR_RF433 1
 #     include "NodeCommand.h"
 #   endif

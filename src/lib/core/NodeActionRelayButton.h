@@ -4,7 +4,11 @@
 # if defined(ENABLE_SENSOR_RELAY_BTN)
 
 #  include <Bounce2.h>
-#  define BOUNCER_INTERVAL 100
+#  if defined(SENSOR_RELAY_TTP226_BTN)
+#    define BOUNCER_INTERVAL 100
+#  else
+#    define BOUNCER_INTERVAL 10
+#  endif
 
 /*
     EventSensor.n = sensor id
@@ -189,20 +193,7 @@ class NodeRelayButton : public SensorInterface<NodeRelayButton> {
               idx = sensorIsValid(ev, msg.sensor);
               if (idx == SENSOR_ID_NONE)
                 return false;
-              break;
-            }
-            default:
-              return false;
-          }
-          
-          /*
-          PRINTF("-- INCOMING RELAY BUTTON | begin MyMessage: %u, index=%u, type: %u\n",
-              (uint16_t) msg.sensor, (uint16_t) idx, (uint16_t) msg.type
-          );
-          */
 
-          switch (msg.getType()) {
-            case V_STATUS: {
               if (ev[idx].s == msg.getByte())
                 return true;
 
@@ -212,9 +203,11 @@ class NodeRelayButton : public SensorInterface<NodeRelayButton> {
               INFO_LED(ev[idx].n);
               break;
             }
+            default:
+              return false;
+          }
+          return true;
         }
-        return true;
-      }
 };
 
 #  undef BOUNCER_INTERVAL

@@ -115,10 +115,10 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
             PRINTF("-- LIGHT LEVEL: %d/%u/%d (%u|%u)\n", rawlight, getLevel(), offset, (uint16_t)state, (uint16_t)stsend);
              */
         }
-        int16_t getVal() {
+        int16_t getVal() const {
             return rawlight;
         }
-        NodeLiveLight::LIGHTS getState() {
+        NodeLiveLight::LIGHTS getState() const {
             return ((isAction[IDX_Calculate]) ? state : NodeLiveLight::LIGHTS::None);
         }
         bool go_presentation() {

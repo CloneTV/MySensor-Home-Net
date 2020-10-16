@@ -230,6 +230,7 @@ class ESP2866_LCD1602_I2C : public Print {
 	// virtual size_t Print::write(uint8_t)
 	size_t write(uint8_t val) {
 		lcd_send_(val, Rs);
+		return 1U;
 	}
 
 	private:

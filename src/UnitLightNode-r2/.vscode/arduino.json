@@ -1,10 +1,10 @@
 {
-    "sketch": "SensorReleyButton.ino",
+    "sketch": "UnitLightNode-r2.ino",
     "port": "COM9",
-    "board": "arduino:avr:pro",
+    "board": "arduino:avr:MYSBL",
     "output": "../build",
     "debugger": "jlink",
     "prebuild": "bash prebuild.sh",
-    "configuration": "cpu=8MHzatmega328",
+    "configuration": "frequency=MYSBL8fw9600",
     "programmer": "ArduinoISP"
 }
