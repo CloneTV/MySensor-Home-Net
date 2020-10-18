@@ -63,6 +63,9 @@
 #define WDT_TIMEOUT			WATCHDOG_8S		// WDT timeout
 #define BOOTLOADER_COMMANDS					// Enable low level boot loader commands
 
+//#define RADIO_POWER_PIN 8
+//#define RADIO_POWER_PORT
+
 // SPI bus setting *****************************************************************************************************
 #define SPI_PINS_CE9_CSN10							
 //define SPI_PINS_CSN7_CE8

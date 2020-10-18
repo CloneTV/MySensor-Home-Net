@@ -53,34 +53,36 @@ class NodeCommand : public SensorInterface<NodeCommand> {
         const char *payload_65 = "[65]";
         const char *payload_97 = "[97]";
 #       endif
-        EventVirtualSwitch ev[17] = {
+        EventVirtualSwitch ev[18] = {
             { 1U,   LOW, LOW, 0U, 5180193U, 16712445LLU },     // (0)  5 // switch 1 5180193/5180194
             { 2U,   LOW, LOW, 0U, 5180194U, 16761405LLU },     // (1)  6
-            { 3U,   LOW, LOW, 0U, 3276321U, 16769055LLU },     // (2)  7 // switch 2 3276321/3276322
-            { 4U,   LOW, LOW, 0U, 3276322U, 16754775LLU },     // (3)  8
-            { 5U,   LOW, LOW, 0U, 750369U,  16748655LLU },     // (4)  9 // switch 3 750369/750370
+            { 3U,   LOW, LOW, 0U, 750369U,  16769055LLU },     // (2)  7 // switch 2 750369/750370
+            { 4U,   LOW, LOW, 0U, 750370U,  16754775LLU },     // (3)  8
+            { 5U,   LOW, LOW, 0U, 3276321U, 16748655LLU },     // (4)  9 // switch 3 3276321/3276322 (clash 5180193 ?)
 
 #           if (defined(CMD_GROUP_MY_CONTROLLER) && (CMD_GROUP_MY_CONTROLLER > 0))
 #           define SCENE_START_ID 100U
             { 111U,  LOW, LOW, 0U, 0U, 16726215LLU },          // (5)  OK
             { 112U,  LOW, LOW, 0U, 0U, 16738455LLU },          // (6)  * scenario On
+            { 113U,  LOW, LOW, 0U, 0U, 0U },                   // (7)  - empty -
 #           else
 #           define SCENE_START_ID 10U
             { 10U,  LOW, LOW, 0U, 0U, 16726215LLU },           // (5)  OK
             { 11U,  LOW, LOW, 0U, 0U, 16738455LLU },           // (6)  * scenario On
+            { 12U,  LOW, LOW, 0U, 0U, 0U },                    // (7)  virtual 'All Off'
 #           endif
-            { 101U, LOW, LOW, 0U, 0U, 16756815LLU },           // (7)  # scenario Off
-            { 106U, LOW, LOW, 0U, 0U, 16750695LLU },           // (8)  0
+            { 101U, LOW, LOW, 0U, 0U, 16756815LLU },           // (8)  # scenario Off
+            { 106U, LOW, LOW, 0U, 0U, 16750695LLU },           // (9)  0
 
-            { 102U, LOW, 4U,  0U, 0U, 16753245LLU },           // (9)  1
-            { 103U, LOW, 3U,  0U, 0U, 16736925LLU },           // (10) 2
-            { 104U, LOW, 0U,  0U, 0U, 16769565LLU },           // (11) 3
-            { 105U, LOW, 1U,  0U, 0U, 16720605LLU },           // (12) 4
+            { 102U, LOW, 4U,  0U, 0U, 16753245LLU },           // (10)  1
+            { 103U, LOW, 3U,  0U, 0U, 16736925LLU },           // (11) 2
+            { 104U, LOW, 0U,  0U, 0U, 16769565LLU },           // (12) 3
+            { 105U, LOW, 1U,  0U, 0U, 16720605LLU },           // (13) 4
 
-            { 107U, LOW, LOW, 0U, 0U, 16718055LLU },           // (13) ^ up
-            { 108U, LOW, LOW, 0U, 0U, 16716015LLU },           // (14) <
-            { 109U, LOW, LOW, 0U, 0U, 16734885LLU },           // (15) >
-            { 110U, LOW, LOW, 0U, 0U, 16730805LLU }            // (16) ^ down
+            { 107U, LOW, LOW, 0U, 0U, 16718055LLU },           // (14) ^ up
+            { 108U, LOW, LOW, 0U, 0U, 16716015LLU },           // (15) <
+            { 109U, LOW, LOW, 0U, 0U, 16734885LLU },           // (16) >
+            { 110U, LOW, LOW, 0U, 0U, 16730805LLU }            // (17) ^ down
         };
         template<typename T>
         void mqttSend(uint8_t node, uint8_t sensor, mysensors_data_t type, T val) {
@@ -275,13 +277,11 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 if (ev[i].n >= 100U)
                     break;
                 if ((ev[i].rfid) && (ev[i].n < SCENE_START_ID)) {
-                    PRINTF("-- go_presentation/Relay: %u\n", ev[i].n);
                     if (!presentSend(ev[i].n, S_BINARY, "Relay.Virtual.Lights"))
                         return false;
                     if (!presentSend(ev[i].n, V_STATUS))
                         return false;
                 } else if (ev[i].n >= SCENE_START_ID) {
-                    PRINTF("-- go_presentation/Scene: %u\n", ev[i].n);
                     if (!presentSend(ev[i].n, S_SCENE_CONTROLLER, "Scene.Virtual.Switch"))
                         return false;
                     if (!presentSend(ev[i].n, V_SCENE_ON))

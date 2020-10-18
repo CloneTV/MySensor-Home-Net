@@ -19,11 +19,14 @@ class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
               return false;
             return ((temp != t_) ? __extension__ ({temp = t_; true;}) : false);
         }
-        uint8_t getId() {
+        uint8_t getTempId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_TEMP);
         }
 
     public:
+        void enable() {
+            isAction = true;
+        }
         bool go_init() {
             return true;
         }
@@ -31,7 +34,7 @@ class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
             /*
               PRINTLN("NODE TEMP | presentation");
             */
-            if (!presentSend(getId(), S_TEMP, "Int.Temp"))
+            if (!presentSend(getTempId(), S_TEMP, "Int.Temp"))
               return false;
             
             return true;
@@ -40,13 +43,23 @@ class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
 
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipTemperature())
-                    reportMsg(getId(), V_TEMP, temp);
+                    reportMsg(getTempId(), V_TEMP, temp);
                 if (isAction)
                     isAction = false;
             }
         }
-        bool go_data(__attribute__ (( __unused__ )) const MyMessage & msg) {
-            return false;
+        bool go_data(const MyMessage & msg) {
+            switch (msg.getType()) {
+                case V_TEMP: {
+                    if (msg.sensor != getTempId())
+                        return false;
+                    break;
+                }
+                default:
+                    return false;
+            }
+            isAction = true;
+            return true;
         }
 };
 

@@ -13,8 +13,8 @@ NodeDimmer    ndimm  = NodeDimmer(&nlight);
 void setup() {}
 void before() {
   INIT_LED();
-  PRINTINIT();
-  PRINTBUILD();
+  INIT_PRINT();
+  BUILD_PRINT();
 
   nlight.init();
   ndimm.init();

@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "name": "ESP8266",
+            "includePath": [
+                "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\Radio\\src",
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.7.4\\**",
+                "${workspaceFolder}/**",
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.3\\**",
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__AVR_ATmega328P__",
+                "ARDUINO=10800"
+            ],
+            "windowsSdkVersion": "10.0.18362.0",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "msvc-x64",
+            "forcedInclude": [
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.3\\cores\\arduino\\Arduino.h"
+            ]
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.3\\**",
+                "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\Bounce2\\src",
+                "E:\\__BuildSource\\__LIB__\\Arduino\\Sketch\\libraries\\MySensors"
+            ],
+            "forcedInclude": [
+                "C:\\Users\\clon\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\avr\\1.8.3\\cores\\arduino\\Arduino.h"
+            ]
+        }
+    ],
+    "version": 4
+}

@@ -25,6 +25,30 @@
 #  include "I2CDefine.h"
 #  include "../config.h"
 
+#  if defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
+#    define TOMEM_ 
+#  else
+#    define TOMEM_ PROGMEM
+#  endif
+
+/* SOIL SENSOR, BAT POWER */
+#   if defined(SOIL_SENSOR_PINS)
+#     define MY_PASSIVE_NODE
+#     if defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
+#       define MY_PASSIVE_BTN_PIN 3
+#     else
+#       define MY_PASSIVE_BTN_PIN 2
+#     endif
+#     if !defined(MY_TIME_SLEEPS)
+#       define MY_TIME_SLEEPS 3600000 // 1 hour
+#     endif
+#     if defined(NO_DEBUG)
+#       undef NO_DEBUG
+#     endif
+#     define NO_DEBUG 1
+#   endif
+
+
 /* INCLUSION BUTTON, LEDS */
 #  if defined(I2C_PCF8574_ENABLE)
 #    define MY_DEFAULT_LED_I2C 1
@@ -99,7 +123,7 @@
         V+  -> 1
         V-  -> 1
 
-	ESP8266 (wemos d1r1) -> NRF2401
+	ESP8266 (wemos d1-r1) -> NRF2401
 	D10 - CSN  -> (v+)2
 	D13 - MOSI -> (v+)3
 	D12 - MISO -> (v-)4
@@ -107,6 +131,25 @@
 	D9  - CE   -> (v-)2
         V+  -> 1
         V-  -> 1
+
+  Pro Mini (328p) -> NRF2401
+  9  - CE   -> (v-)2
+  10 - CSN  -> (v+)2
+  13 - SCK  -> (v-)3
+  11 - MOSI -> (v+)3
+  12 - MISO -> (v-)4
+        V+  -> 1
+        V-  -> 1
+
+  Nano, Mega -> NRF2401
+  49 - CE   -> (v-)2
+  53 - CSN  -> (v+)2
+  52 - SCK  -> (v-)3
+  51 - MOSI -> (v+)3
+  50 - MISO -> (v-)4
+        V+  -> 1
+        V-  -> 1
+
  */
 
 /* MQTT */
@@ -132,12 +175,12 @@
 #  if (defined(MY_DEBUG) && !defined(MY_DISABLED_SERIAL))
 
 #    if defined(ESP8266)
-#      define PRINTINIT() { Serial.begin(MY_BAUD_RATE, SERIAL_8N1, SERIAL_TX_ONLY); while (!Serial) delay(50); }
+#      define INIT_PRINT() { Serial.begin(MY_BAUD_RATE, SERIAL_8N1, SERIAL_TX_ONLY); while (!Serial) delay(50); }
 #    else
-#      define PRINTINIT() Serial.begin(MY_BAUD_RATE)
+#      define INIT_PRINT() Serial.begin(MY_BAUD_RATE)
 #    endif
-#    define PRINTBUILD() {                                                                                                     \
-              const PROGMEM char build_sketch[] = "-- Build: %s - %s, %s\n-- Name: [%s:%s]\n-- Init: dimmers=%u, releys=%u, releysBtn=%u\n"; \
+#    define BUILD_PRINT() {                                                                                                     \
+              const TOMEM_ char build_sketch[] = "-- Build: %s - %s, %s\n-- Name: [%s:%s]\n-- Init: dimmers=%u, releys=%u, releysBtn=%u\n"; \
               PRINTF(build_sketch,                                                                                             \
                      str_build[0], str_build[1], str_build[2],                                                                 \
                      str_firmware[0], str_firmware[1],                                                                         \
@@ -154,8 +197,8 @@
 #    define PRINTLN(A) Serial.println(F(A)); Serial.flush()
 #    define PRINTVLN(A) Serial.println(A)
 #  else
-#    define PRINTINIT()
-#    define PRINTBUILD()
+#    define INIT_PRINT()
+#    define BUILD_PRINT()
 #    define PRINT(A)
 #    define PRINTV(A)
 #    define PRINTF(A, ...)
@@ -221,6 +264,9 @@ typedef void (*led_cb_t)(uint8_t);
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
 
+#  if !defined(INTERNAL_LIVE_SOIL)
+#    define INTERNAL_LIVE_SOIL 242
+#  endif
 #  if !defined(INTERNAL_LIVE_CMD_REBOOT)
 #    define INTERNAL_LIVE_CMD_REBOOT 243
 #  endif
@@ -259,12 +305,12 @@ typedef void (*led_cb_t)(uint8_t);
 #  endif
 
 #  if defined(MY_DEBUG)
-   const PROGMEM char * const str_build[] = {
+   const TOMEM_ char * const str_build[] = {
        __DATE__, __TIME__, __VERSION__
    };
 #  endif
 
-const PROGMEM char * const str_firmware[] = {
+const TOMEM_ char * const str_firmware[] = {
   MY_HOSTNAME, MY_VERSION
 };
 
@@ -323,12 +369,10 @@ const PROGMEM char * const str_firmware[] = {
 #     define ENABLE_I2C_GPIO_EXPANDER 1
 #     include "NodeI2CExpander.h"
 #   endif
-#   if (INTERNAL_LIVE_AUTO_FREE_MEM > 0)
-#     define ENABLE_LIVE_FREE_MEM 1
+#   if defined(ENABLE_LIVE_FREE_MEM)
 #     include "NodeLiveMem.h"
 #   endif
-#   if (INTERNAL_LIVE_RSSI > 0)
-#     define ENABLE_LIVE_SENSOR_RSSI 1
+#   if defined(ENABLE_LIVE_SENSOR_RSSI)
 #     include "NodeLiveRSSI.h"
 #   endif
 #   if (INTERNAL_LIVE_VOLT_PIN >= 0)
@@ -341,6 +385,10 @@ const PROGMEM char * const str_firmware[] = {
 #   elif (LIGHT_SENSOR_BTN > 0)
 #     define ENABLE_SENSOR_RELAY_BTN 1
 #     include "NodeActionRelayButton.h"
+#   endif
+#   if defined(SOIL_SENSOR_PINS)
+#     define ENABLE_SENSOR_SOIL 1
+#     include "NodeActionMoisture.h"
 #   endif
 #   if (DIMMER_SENSOR > 0)
 #     define ENABLE_SENSOR_DIMMER 1

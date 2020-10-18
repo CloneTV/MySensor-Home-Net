@@ -23,10 +23,14 @@
     EventSensor.val = incoming procentage value
     EventSensor.old = old procentage value // NOT Modify!
  */
-typedef struct _EventDimmer {
+struct EventDimmer {
   uint8_t n, p, s, e, o;
   int16_t val, old;
-} EventDimmer __attribute__((packed));
+#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
+} __attribute__((packed));
+#  else
+};
+#  endif 
 
 /* ------- DIMMER_SENSOR ------- */
 

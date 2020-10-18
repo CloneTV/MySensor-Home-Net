@@ -21,3 +21,6 @@
 ///
 #define INTERNAL_LIVE_VOLT_PIN A0  /* Internal power volts */
 #define INTERNAL_LIVE_ILLUMINATION_PIN A1 /* Internal illumination photo-resistor */
+//
+#define ENABLE_LIVE_FREE_MEM 1
+#define ENABLE_LIVE_SENSOR_RSSI 1

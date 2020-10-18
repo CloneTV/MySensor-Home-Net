@@ -87,6 +87,9 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
         }
 
     public:
+        void enable() {
+            isAction[IDX_Start] = true;
+        }
         void setCallBack(light_input_cb c) {
             cb = c;
         }
@@ -129,7 +132,7 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
             uint8_t aid = getAutoId(),
                     sid = getAutoSetupId(),
                     lid = getLummId();
-            if (!presentSend(lid, S_LIGHT_LEVEL))
+            if (!presentSend(lid, S_LIGHT_LEVEL, "Int.Lights"))
               return false;
             if (!presentSend(lid, V_LIGHT_LEVEL))
               return false;

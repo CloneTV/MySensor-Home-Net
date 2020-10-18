@@ -40,6 +40,7 @@
 /src/Gateway/core/*.h
 /src/Firmware/MYSBootloader/.vs
 /src/Firmware/MYSBootloader/build.cmd
+/src/UnitMoistureNode/core/*.h
 /src/UnitLightNode-r2/core/*.h
 /src/UnitLightNode-r2-d2/core/*.h
 /src/SensorDimmer/core/*.h

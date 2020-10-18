@@ -19,7 +19,11 @@
 struct EventRelayButton {
   uint8_t n, pr, pb, s, e;
   Bounce *b;
+#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
 } __attribute__((packed));
+#  else
+};
+#  endif 
 
 /* ------- LIGHT BUTTON ON/OFF SENSOR ------- */
 

@@ -135,13 +135,17 @@ static void watchdogConfig(const uint8_t wdtConfig) {
 
 
 static void initSPI(void) {
+	#if defined(RADIO_POWER_PIN)
+		// CSN_PIN (=PB2) is SS pin and set as output
+		RADIO_POWER_PIN ^= _BV(RADIO_POWER_PIN);
+	#endif
 	// Initialize the SPI pins: SCK, MOSI, CE, CSN as outputs, MISO as input
 	#if defined(SPI_PINS_CE9_CSN10)
 		// CSN_PIN (=PB2) is SS pin and set as output
 		SPI_DDR = _BV(SPI_MOSI) | _BV(SPI_SCLK) | _BV(CE_PIN) | _BV(CSN_PIN);
 	#elif defined(SPI_PINS_CSN7_CE8)
 		// PB2 is SS pin has to be defined as OUTPUT, else SPI goes to slave mode
-		SPI_DDR = _BV(SPI_MOSI) | _BV(SPI_SCLK) | _BV(CE_PIN) | _BV(PB2);	
+		SPI_DDR = _BV(SPI_MOSI) | _BV(SPI_SCLK) | _BV(CE_PIN) | _BV(PB2);
 		CSN_DDR = _BV(CSN_PIN);
 	#elif defined(SPI_PINS_CE4_CSN10)
 		// PB2 is SS pin has to be defined as OUTPUT, else SPI goes to slave mode

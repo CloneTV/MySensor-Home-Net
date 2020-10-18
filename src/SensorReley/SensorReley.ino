@@ -14,8 +14,8 @@ NodeRelay     nrelay = NodeRelay(&nlight);
 void setup() {}
 void before() {
   INIT_LED();
-  PRINTINIT();
-  PRINTBUILD();
+  INIT_PRINT();
+  BUILD_PRINT();
 
   nltemp.init();
   nrelay.init();

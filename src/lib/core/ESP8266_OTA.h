@@ -45,7 +45,7 @@ void OTASetup(const char *myhost, const char *mypwd, led_cb_t errled) {
     static_cast<const char*>(MY_WIFI_PASSWORD)
    );
 
-   PRINTINIT();
+   INIT_PRINT();
    ArduinoOTA.setHostname(myhost);
    ArduinoOTA.setPassword(mypwd);
 

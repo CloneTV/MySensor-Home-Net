@@ -1,0 +1,10 @@
+{
+    "sketch": "UnitMoistureNode.ino",
+    "port": "COM9",
+    "board": "arduino:avr:MYSBL",
+    "output": "../build",
+    "debugger": "jlink",
+    "prebuild": "bash prebuild.sh",
+    "configuration": "frequency=MYSBL8fw9600",
+    "programmer": "ArduinoISP"
+}

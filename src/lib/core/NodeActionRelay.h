@@ -11,7 +11,11 @@
  */
 struct EventRelay {
   uint8_t n, p, s, e;
+#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
 } __attribute__((packed));
+#  else
+};
+#  endif 
 
 /* ------- LIGHT ON/OFF SENSOR ------- */
 

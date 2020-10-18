@@ -39,9 +39,9 @@ void setup() {
 }
 void before() {
   INIT_LED();
-  PRINTINIT();
+  INIT_PRINT();
   wait(500);
-  PRINTBUILD();
+  BUILD_PRINT();
   INFO_LED(1);
 }
 
