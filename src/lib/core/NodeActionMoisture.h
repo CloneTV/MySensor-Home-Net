@@ -21,6 +21,9 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
         uint8_t getSoilId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_SOIL);
         }
+        uint8_t getInfoId() {
+            return static_cast<uint8_t>(INTERNAL_LIVE_INFO);
+        }
         uint8_t getVoltId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_VOLT);
         }
@@ -122,6 +125,10 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                     break;
                 if (!presentSend(getSoilId(), V_LEVEL))
                     break;
+                if (!presentSend(getInfoId(), S_INFO, "Info.Soil"))
+                    break;
+                if (!presentSend(getInfoId(), V_TEXT))
+                    break;
                 if (!presentSend(getVoltId(), S_MULTIMETER, "Int.Bat.Volt"))
                     break;
                 if (!presentSend(getVoltId(), V_VOLTAGE))
@@ -145,11 +152,14 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                     uint16_t volt = map(v, 1.6, 3.3, 0, 100);
                     sendBatteryLevel(volt, false);
                 }
-                uint16_t m = readData();
+                int32_t m = readData();
                 {
                     if (lastval == m)
                         return;
                     lastval = m;
+                    m = (0.000001 * m * m * m * -1);
+                    m += (m * m * 0.001649);
+                    m += ((m * -0.686978) + 121.559157);
                     m = (1024U - m);
                     m = map(m, 0, 1024, 0, 100);
                     isAction[IDX_Change] = true;
@@ -169,13 +179,17 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                         return false;
                     break;
                 }
+                case V_TEXT: {
+                    if (msg.sensor != getInfoId())
+                        return false;
+                    return true;
+                }
                 default:
                     return false;
             }
             isAction[IDX_Enable] = true;
             return true;
         }
-    
 };
 #  undef PIN_index_A
 #  undef PIN_index_1

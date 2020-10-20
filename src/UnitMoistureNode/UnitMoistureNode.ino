@@ -3,7 +3,6 @@
 
 uint8_t presentStatus = 1U;
 NodeLiveTemp    nltemp = NodeLiveTemp();
-NodeLiveLight   nlight = NodeLiveLight();
 NodeMoisture    nsoil  = NodeMoisture();
 
 void setup() {}
@@ -18,7 +17,6 @@ void before() {
     }
   }
   nltemp.init();
-  nlight.init();
 }
 bool presentationStep(uint8_t idx) {
   switch (idx) {
@@ -33,11 +31,6 @@ bool presentationStep(uint8_t idx) {
       break;
     }
     case 3U: {
-      if (!nlight.presentation())
-        return false;
-      break;
-    }
-    case 4U: {
       if (!nsoil.presentation())
         return false;
       break;
@@ -56,7 +49,7 @@ void presentation() {
   if (!nsoil.rfbegin()) {
     return;
   }
-  while (presentStatus <= 4U) {
+  while (presentStatus <= 3U) {
     if (!presentationStep(presentStatus)) {
       nsoil.rfend();
       return;
@@ -86,9 +79,6 @@ void loop() {
       //
       nltemp.enable();
       nltemp.data(cnt);
-      //
-      nlight.enable();
-      nlight.data(cnt);
 
     } while (0);
 
@@ -104,8 +94,6 @@ void receive(const MyMessage & msg) {
      return;
   }
   if (nltemp.data(msg))
-    return;
-  if (nlight.data(msg))
     return;
   
   (void) nsoil.data(msg);

@@ -12,5 +12,3 @@
 #define ENABLE_SENSOR_SOIL 1
 /* PIN_index_1, PIN_index_2, PIN_index_NRF, PIN_index_A (read) */
 #define SOIL_SENSOR_PINS A1,A2,8,A3   /* enable Soil sensor */
-///
-#define INTERNAL_LIVE_ILLUMINATION_PIN A0 /* Internal illumination photo-resistor */

@@ -264,6 +264,9 @@ typedef void (*led_cb_t)(uint8_t);
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
 
+#  if !defined(INTERNAL_LIVE_INFO)
+#    define INTERNAL_LIVE_INFO 241
+#  endif
 #  if !defined(INTERNAL_LIVE_SOIL)
 #    define INTERNAL_LIVE_SOIL 242
 #  endif
@@ -341,7 +344,7 @@ const TOMEM_ char * const str_firmware[] = {
 
 /* ------- ENABLE/DISABLE BLOCK ------- */
 
-#   if (INTERNAL_LIVE_ILLUMINATION >= 0)
+#   if (defined(INTERNAL_LIVE_ILLUMINATION_PIN) && (INTERNAL_LIVE_ILLUMINATION_PIN >= 0))
 #     if (defined(I2C_AP3216_ENABLE) && defined(ESP8266))
 #       define ENABLE_I2C_SENSOR_ILLUMINATION 1
 #       include "NodeI2CLight.h"
@@ -350,7 +353,7 @@ const TOMEM_ char * const str_firmware[] = {
 #       include "NodeLiveLight.h"
 #     endif
 #   endif
-#   if (INTERNAL_LIVE_TEMP > 0)
+#   if (defined(INTERNAL_LIVE_TEMP) && (INTERNAL_LIVE_TEMP > 0))
 #     if (defined(I2C_BMP180_ENABLE) && defined(ESP8266))
 #       define ENABLE_I2C_SENSOR_TEMP 1
 #       include "NodeI2CWeather.h"
@@ -375,14 +378,14 @@ const TOMEM_ char * const str_firmware[] = {
 #   if defined(ENABLE_LIVE_SENSOR_RSSI)
 #     include "NodeLiveRSSI.h"
 #   endif
-#   if (INTERNAL_LIVE_VOLT_PIN >= 0)
+#   if (defined(INTERNAL_LIVE_VOLT_PIN) && (INTERNAL_LIVE_VOLT_PIN >= 0))
 #     define ENABLE_LIVE_SENSOR_VOLT 1
 #     include "NodeLiveBat.h"
 #   endif
-#   if (LIGHT_SENSOR > 0)
+#   if (defined(LIGHT_SENSOR) && (LIGHT_SENSOR > 0))
 #     define ENABLE_SENSOR_RELAY 1
 #     include "NodeActionRelay.h"
-#   elif (LIGHT_SENSOR_BTN > 0)
+#   elif (defined(LIGHT_SENSOR_BTN) && (LIGHT_SENSOR_BTN > 0))
 #     define ENABLE_SENSOR_RELAY_BTN 1
 #     include "NodeActionRelayButton.h"
 #   endif
@@ -390,7 +393,7 @@ const TOMEM_ char * const str_firmware[] = {
 #     define ENABLE_SENSOR_SOIL 1
 #     include "NodeActionMoisture.h"
 #   endif
-#   if (DIMMER_SENSOR > 0)
+#   if (defined(DIMMER_SENSOR) && (DIMMER_SENSOR > 0))
 #     define ENABLE_SENSOR_DIMMER 1
 #     include "NodeActionDimmer.h"
 #   endif
