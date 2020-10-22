@@ -2,15 +2,35 @@
 #define __MY_SENSOR_SOIL_H 1
 
 # if defined(ENABLE_SENSOR_SOIL)
-#  define PIN_index_1 0
-#  define PIN_index_2 1
+#  define PIN_index_1   0
+#  define PIN_index_2   1
 #  define PIN_index_NRF 2
-#  define PIN_index_A 3
+#  define PIN_index_A   3
+
+/* 
+    // SOIL_SENSOR_PINS A3,A2,8,A1 //
+    
+    PIN_index_1 = A3 (phase)
+    PIN_index_2 = A2 (phase)
+    PIN_index_A = A1 (read)
+    //
+    PIN_index_NRF = 8
+
+    A3 - sensor (1)
+    A1 - sensor (2) + R4.7k
+    A2 - R4.7k -> to A1
+
+    A3 --------------< sensor (1)
+    A2 --[4.7k] --*--< sensor (2)
+                  |
+    A1 -----------*
+
+*/
 
 #  define POLL_WAIT_SECONDS 600U
-#  define IDX_Enable 0
-#  define IDX_Change 1
-#  define IDX_Rfinit 2
+#  define IDX_Enable    0
+#  define IDX_Change    1
+#  define IDX_Rfinit    2
 
 
 class NodeMoisture : public SensorInterface<NodeMoisture> {
@@ -152,16 +172,16 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                     uint16_t volt = map(v, 1.6, 3.3, 0, 100);
                     sendBatteryLevel(volt, false);
                 }
-                int32_t m = readData();
+                uint16_t m = readData();
                 {
                     if (lastval == m)
                         return;
                     lastval = m;
-                    m = (0.000001 * m * m * m * -1);
-                    m += (m * m * 0.001649);
-                    m += ((m * -0.686978) + 121.559157);
+                    PRINTF("-- value (1) = %u\n", m);
                     m = (1024U - m);
+                    PRINTF("-- value (2) = %u\n", m);
                     m = map(m, 0, 1024, 0, 100);
+                    PRINTF("-- value (3) = %u\n", m);
                     isAction[IDX_Change] = true;
                     reportMsg(getSoilId(), V_LEVEL, m);
                 }

@@ -43,9 +43,9 @@
 #       define MY_TIME_SLEEPS 3600000 // 1 hour
 #     endif
 #     if defined(NO_DEBUG)
-#       undef NO_DEBUG
+//#       undef NO_DEBUG
 #     endif
-#     define NO_DEBUG 1
+//#     define NO_DEBUG 1
 #   endif
 
 
