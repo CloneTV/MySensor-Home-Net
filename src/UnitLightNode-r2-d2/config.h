@@ -5,7 +5,7 @@
 #define MY_PARENT_NODE_ID 0
 #define MY_PARENT_NODE_IS_STATIC
 #define MY_HOSTNAME "Unit-LightNode-r2-d2"
-#define MY_VERSION "1.4"
+#define MY_VERSION "1.5"
 ///
 #define NO_DEBUG 1
 #define NO_DEBUG_RADIO 1

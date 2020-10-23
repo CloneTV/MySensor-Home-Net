@@ -43,7 +43,7 @@ class NodeLiveTemp : public SensorInterface<NodeLiveTemp> {
 
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipTemperature())
-                    reportMsg(getTempId(), V_TEMP, temp);
+                    reportMsg(getTempId(), V_TEMP, temp, false);
                 if (isAction)
                     isAction = false;
             }

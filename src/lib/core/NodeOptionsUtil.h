@@ -28,13 +28,15 @@ uint8_t sensorIsValid_(const T base[], const uint8_t & sz, const uint8_t & id) {
 }
 
 template<typename T>
-void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val) {
+void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val, const bool retain) {
     MyMessage msg(id, tag);
+    msg.setSigned(retain);
     send(msg.set(val), true);
 }
 template<typename T>
-void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val, const uint8_t decimals) {
+void reportMsg(const uint8_t & id, const mysensors_data_t & tag, const T & val, const uint8_t decimals, const bool retain) {
     MyMessage msg(id, tag);
+    msg.setSigned(retain);
     send(msg.set(val, decimals), true);
 }
 template<typename T>

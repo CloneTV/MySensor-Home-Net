@@ -55,18 +55,18 @@ class NodeLiveRssi : public SensorInterface<NodeLiveRssi> {
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (radioQuality()) {
 #                   if !defined(MYCONTROLLER_ENGINE)
-                    reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi));
+                    reportMsg(getId(), V_LEVEL, static_cast<uint16_t>(rssi), false);
 #                   else
                     /*
                         // Compare memory size, snprintf -> String
                     char *buff = new char[18]{};
                     (void) snprintf(buff, 17, "rssi:%d", rssi);
-                    reportMsg(getId(), V_VAR5, buff);
+                    reportMsg(getId(), V_VAR5, buff, false);
                     delete [] buff;
                     */
                     String s = String("rssi:");
                     s.concat(rssi);
-                    reportMsg(getId(), V_VAR5, s.c_str());
+                    reportMsg(getId(), V_VAR5, s.c_str(), false);
 #                   endif
                 }
                 if (isAction)

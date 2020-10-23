@@ -129,8 +129,8 @@ class NodeDimmer : public SensorInterface<NodeDimmer> {
         void change(uint8_t & idx) {
             fade(idx);
             saveState(ev[idx].n, ev[idx].s);
-            reportMsg(ev[idx].n, V_STATUS, static_cast<bool>(ev[idx].s));
-            reportMsg(ev[idx].n, V_PERCENTAGE, ev[idx].val);
+            reportMsg(ev[idx].n, V_STATUS, static_cast<bool>(ev[idx].s), false);
+            reportMsg(ev[idx].n, V_PERCENTAGE, ev[idx].val, false);
         }
    
     public:
@@ -224,7 +224,7 @@ class NodeDimmer : public SensorInterface<NodeDimmer> {
 
             } else {
               fade(i);
-              reportMsg(ev[i].n, V_PERCENTAGE, ev[i].val);
+              reportMsg(ev[i].n, V_PERCENTAGE, ev[i].val, false);
               
             }
             ev[i].e = LOW;

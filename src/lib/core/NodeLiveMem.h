@@ -60,7 +60,7 @@ class NodeLiveMem : public SensorInterface<NodeLiveMem> {
 
             if (isAction) {
                 isAction = false;
-                reportMsg(getId(), V_CUSTOM, getFreeMem());
+                reportMsg(getId(), V_CUSTOM, getFreeMem(), false);
             }
         }
         bool go_data(const MyMessage & msg) {

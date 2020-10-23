@@ -48,3 +48,4 @@
 /src/SensorFake/core/*.h
 /src/SensorReley/core/*.h
 /src/SensorReleyButton/core/*.h
+/src/mqtt-qw-out.cmd

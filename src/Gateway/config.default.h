@@ -13,13 +13,13 @@
 #  define MY_OTA_PASSWD "otapwd"
 /* Firmware ID */
 #  define MY_HOSTNAME "esp8266-Gateway"
-#  define MY_VERSION "1.4"
+#  define MY_VERSION "1.5"
 /* MQTT */
 #  define MY_CONTROLLER_IP_ADDRESS 192, 168, 0, 2
 #  define MY_MQTT_CLIENT_ID "group id"
 #  define MY_MQTT_USER "user id"
 #  define MY_MQTT_PASSWORD "user pwd"
-// #  define MY_MQTT_CLIENT_PUBLISH_RETAIN
+#  define MY_MQTT_CLIENT_PUBLISH_RETAIN_SIGNED_FLAG 1
 
 /* COMMAND MODE (NodeCommand.h - MyController API) */
 #  define CMD_GROUP_MY_CONTROLLER 0
@@ -28,6 +28,7 @@
 #  define CMD_GROUP_AUTH "Base64 'login:password' string"
 #  define CMD_GROUP_URI_ON "/mc/rest/resources/group/on"
 #  define CMD_GROUP_URI_OFF "/mc/rest/resources/group/off"
+#  define URL_FLOR_DEFAULT "http://yousite:8080/images/flower%u.png"
 
 /* INCLUSION BUTTON, LEDS */
 #  define MY_INCLUSION_BUTTON_FEATURE 1

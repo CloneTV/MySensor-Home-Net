@@ -169,7 +169,8 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
                         getTempId(),
                         V_TEMP,
                         t,
-                        1U
+                        1U,
+                        false
                     );
                 }
                 if ((p != p_) || (isAction[IDX_Change])) {
@@ -178,7 +179,8 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
                        getBaroId(),
                        V_PRESSURE,
                        p,
-                       1U
+                       1U,
+                       false
                     );
                     ///
                     const float alt_ = static_cast<float>(BMP280_ALTITUDE_DEFAULT);
@@ -188,7 +190,8 @@ class NodeI2CWeather : public SensorInterface<NodeI2CWeather> {
                         reportMsg(
                             getBaroId(),
                             V_FORECAST,
-                            getForecastString(r_)
+                            getForecastString(r_),
+                            false
                         );
                 }
                 if (isAction[IDX_Change])

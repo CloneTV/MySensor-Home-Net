@@ -5,7 +5,7 @@
 #define MY_HOSTNAME "Unit-MoistureNode"
 #define MY_VERSION "1.5"
 ///
-#define NO_DEBUG 0
+#define NO_DEBUG 1
 #define NO_DEBUG_RADIO 1
 #define LED_DEBUG 1          /* Atmega board internal LED Debug blink method */
 ///

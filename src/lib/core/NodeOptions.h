@@ -43,9 +43,9 @@
 #       define MY_TIME_SLEEPS 3600000 // 1 hour
 #     endif
 #     if defined(NO_DEBUG)
-//#       undef NO_DEBUG
+#       undef NO_DEBUG
 #     endif
-//#     define NO_DEBUG 1
+#     define NO_DEBUG 1
 #   endif
 
 
@@ -157,7 +157,6 @@
 #    define MY_PORT 1883
 #    define MY_NODE_ID 0
 #    define MY_GATEWAY_MQTT_CLIENT
-// #    define MY_MQTT_CLIENT_PUBLISH_RETAIN
 #    define MY_MQTT_PUBLISH_TOPIC_PREFIX "gw-out"
 #    define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "gw-in"
 #  endif
@@ -264,6 +263,9 @@ typedef void (*led_cb_t)(uint8_t);
 #    define INTERNAL_LIVE_VOLT_PIN -1
 #  endif
 
+#  if !defined(INTERNAL_LIVE_VIRTUAL)
+#    define INTERNAL_LIVE_VIRTUAL 199
+#  endif
 #  if !defined(INTERNAL_LIVE_INFO)
 #    define INTERNAL_LIVE_INFO 241
 #  endif

@@ -12,22 +12,28 @@
 class NodeLiveBat : public SensorInterface<NodeLiveBat> {
     private:
         bool isAction = true;
-        uint8_t volt = 0U;
+        uint8_t proc = 0U;
+        float   volt = 0.00f;
         bool chipVoltage() {
 #           if defined(MY_GATEWAY_ESP8266)
-                int16_t v_ = ESP.getVcc();
+                uint16_t v_ = ESP.getVcc();
+                volt = ((float)v_/1024.0f);
+                proc = static_cast<uint8_t>(map(v_, 0, 1024, 0, 100));
+                return true;
 #           else
-                int16_t v_ = analogRead(INTERNAL_LIVE_VOLT_PIN) / 10;
+                int16_t v_ = analogRead(INTERNAL_LIVE_VOLT_PIN);
+                volt = v_ * 0.003363075;
+                v_ /= 10;
+                v_ = ((v_ < 0) ? 0 : ((v_ > 100) ? 100 : v_));
+                
+                if (proc != v_) {
+                    proc = static_cast<uint8_t>(v_);
+                    return true;
+                }
+                return false;
 #           endif
-
-            v_ = ((v_ < 0) ? 0 : ((v_ > 100) ? 100 : v_));
-            if (volt != v_) {
-              volt = static_cast<uint8_t>(v_);
-              return true;
-            }
-            return false;
         }
-        uint8_t getId() {
+        uint8_t getVoltId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_VOLT);
         }
 
@@ -43,18 +49,35 @@ class NodeLiveBat : public SensorInterface<NodeLiveBat> {
             return true;
         }
         bool go_presentation() {
+            if (!presentSend(getVoltId(), S_MULTIMETER, "Int.Bat.Volt"))
+                return false;
+            if (!presentSend(getVoltId(), V_VOLTAGE))
+                return false;
             return true;
         }
         void go_data(uint16_t & cnt) {
             if (((cnt % POLL_WAIT_SECONDS) == 0) || (isAction)) {
                 if (chipVoltage())
-                    sendBatteryLevel(volt, false);
+                    sendBatteryLevel(proc, false);
+                if (!isnan(volt))
+                    reportMsg(getVoltId(), V_VOLTAGE, volt, 2U, false);
+
                 if (isAction)
                     isAction = false;
             }
         }
-        bool go_data(__attribute__ (( __unused__ )) const MyMessage&) {
-            return false;
+        bool go_data(const MyMessage & msg) {
+            switch (msg.getType()) {
+                case V_VOLTAGE: {
+                    if (msg.sensor != getVoltId())
+                        return false;
+                    break;
+                }
+                default:
+                    return false;
+            }
+            isAction = true;
+            return isAction;
         }
 };
 

@@ -12,13 +12,13 @@ extern MyMessage _outMsg,_inMsg;
 extern uint8_t _configuredParentID;
 extern uint8_t _save_MCUSR;
 
-#define TIMEOUT_MS					(2000)		// careful when changing
+#define TIMEOUT_MS			(2000)		// careful when changing
 #define MAX_FIRMWARE_REQUEST_RESEND	(3)
 
 #define SIGNING_PRESENTATION_VERSION_1	(1)
-#define SIGNING_PRESENTATION_VALUE		(0)	// no signing
+#define SIGNING_PRESENTATION_VALUE	(0)	// no signing
 
-#define AUTO				(0xFFu)
+#define AUTO			(0xFFu)
 #define NODE_SENSOR_ID		(0xFFu)
 #define DISTANCE_INVALID	(0xFFu)
 #define BROADCAST_ADDRESS	(0xFFu)
@@ -33,7 +33,7 @@ extern uint8_t _save_MCUSR;
 
 // Pseudo command used by processRX. Use out of range values
 #define I_FIND_CONFIGURED_PARENT_RESPONSE_PSEUDO_COMMAND	(0xFE)
-#define I_NO_ANSWER_PSEUDO_COMMAND							(0xFF)
+#define I_NO_ANSWER_PSEUDO_COMMAND				(0xFF)
 
 static uint8_t byteAtoi(const char *str, uint8_t len)
 {

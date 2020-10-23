@@ -1,6 +1,8 @@
 #if !defined(MY_DEBUG_DISPLAY_H_)
 #define MY_DEBUG_DISPLAY_H_
 
+#  if 0
+
 typedef void (*prn_cb)(const char*);
 
 #  if defined(MY_DEBUG_DISPLAY)
@@ -42,16 +44,18 @@ class MyDebugDisplay : public Print {
         }
 };
 
+
 #  endif
-#endif
-
-
-
+/*
 #if defined(MY_DEBUG_DISPLAY)
 #  if defined(MY_DEBUGDEVICE)
 #    undef MY_DEBUGDEVICE
 #  endif
 #  define MY_DEBUGDEVICE display
 #endif
+*/
+#  endif
+#endif
+
 
 

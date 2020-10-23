@@ -41,9 +41,6 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
         uint8_t getSoilId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_SOIL);
         }
-        uint8_t getInfoId() {
-            return static_cast<uint8_t>(INTERNAL_LIVE_INFO);
-        }
         uint8_t getVoltId() {
             return static_cast<uint8_t>(INTERNAL_LIVE_VOLT);
         }
@@ -74,11 +71,25 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
             ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
             delay(2);
             ADCSRA |= _BV(ADSC);
-            while (bit_is_set(ADCSRA,ADSC));
+            while (bit_is_set(ADCSRA, ADSC));
             result = ADCL;
             result |= ADCH << 8;
             result = (1100L * 1023)/result;
             return (((float)result)/1000);
+        }
+        uint8_t setMoistureState(const uint16_t & val) {
+            if (val >= 90)
+                return 1U;
+            else if (val >= 70)
+                return 2U;
+            else if (val >= 50)
+                return 3U;
+            else if (val >= 30)
+                return 4U;
+            else if (val >= 1)
+                return 5U;
+            else
+                return 0U;
         }
 
     public:
@@ -145,9 +156,7 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                     break;
                 if (!presentSend(getSoilId(), V_LEVEL))
                     break;
-                if (!presentSend(getInfoId(), S_INFO, "Info.Soil"))
-                    break;
-                if (!presentSend(getInfoId(), V_TEXT))
+                if (!presentSend(getSoilId(), V_ARMED))
                     break;
                 if (!presentSend(getVoltId(), S_MULTIMETER, "Int.Bat.Volt"))
                     break;
@@ -158,33 +167,37 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
             return false;
         }
         void go_data(const uint16_t & cnt) {
-            if ((isAction[IDX_Enable]) || ((cnt % POLL_WAIT_SECONDS) == 0)) {
-                if (isAction[IDX_Enable])
-                    isAction[IDX_Enable] = false;
+            if (isAction[IDX_Enable]) {
+                isAction[IDX_Enable] = false;
 
                 if ((!isTransportReady()) && (!rfbegin()))
                     return;
 
                 float v = readVcc();
                 {
-                    reportMsg(getVoltId(), V_VOLTAGE, v, 2U);
+                    reportMsg(getVoltId(), V_VOLTAGE, v, 2U, true);
                     wait(100);
                     uint16_t volt = map(v, 1.6, 3.3, 0, 100);
                     sendBatteryLevel(volt, false);
                 }
-                uint16_t m = readData();
-                {
-                    if (lastval == m)
-                        return;
-                    lastval = m;
-                    PRINTF("-- value (1) = %u\n", m);
-                    m = (1024U - m);
-                    PRINTF("-- value (2) = %u\n", m);
-                    m = map(m, 0, 1024, 0, 100);
-                    PRINTF("-- value (3) = %u\n", m);
-                    isAction[IDX_Change] = true;
-                    reportMsg(getSoilId(), V_LEVEL, m);
-                }
+
+                do {
+                    uint16_t m = readData();
+                    {
+                        if (lastval == m)
+                            return;
+                        lastval = m;
+                        PRINTF("-- value (1) = %u\n", m);
+                        m = (1024U - m);
+                        PRINTF("-- value (2) = %u\n", m);
+                        m = map(m, 0, 1024, 0, 100);
+                        PRINTF("-- value (3) = %u\n", m);
+                        isAction[IDX_Change] = true;
+                        reportMsg(getSoilId(), V_LEVEL, m, true);
+                        reportMsg(getSoilId(), V_ARMED, setMoistureState(m), true);
+                        
+                    }
+                } while(0);
             }
         }
         bool go_data(const MyMessage & msg) {
@@ -198,11 +211,6 @@ class NodeMoisture : public SensorInterface<NodeMoisture> {
                     if (msg.sensor != getVoltId())
                         return false;
                     break;
-                }
-                case V_TEXT: {
-                    if (msg.sensor != getInfoId())
-                        return false;
-                    return true;
                 }
                 default:
                     return false;

@@ -99,7 +99,8 @@ class NodeIrControl : public SensorInterface<NodeIrControl> {
                     reportMsg(
                        getIrRcvId(),
                        V_IR_RECEIVE,
-                       s.c_str()
+                       s.c_str(),
+                       false
                     );
                     cb(irdata.value);
                 }

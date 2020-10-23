@@ -159,7 +159,8 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
                     reportMsg(
                         getLummId(),
                         V_LIGHT_LEVEL,
-                        level
+                        level,
+                        false
                     );
                     cb(level);
                 }
@@ -177,11 +178,11 @@ class NodeLiveLight : public SensorInterface<NodeLiveLight> {
                     }
                 }
                 sdata.concat("]}");
-                reportMsg(getAutoSetupId(), V_CUSTOM, sdata.c_str());
+                reportMsg(getAutoSetupId(), V_CUSTOM, sdata.c_str(), false);
             }
             if (isAction[IDX_Change]) {
                 isAction[IDX_Change] = false;
-                reportMsg(getAutoId(), V_STATUS, static_cast<bool>(isAction[IDX_Calculate]));
+                reportMsg(getAutoId(), V_STATUS, static_cast<bool>(isAction[IDX_Calculate]), false);
             }
         }
         bool go_data(const MyMessage & msg) {

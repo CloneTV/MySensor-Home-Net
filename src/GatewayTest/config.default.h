@@ -20,7 +20,7 @@
 #  define MY_MQTT_CLIENT_ID "group id"
 #  define MY_MQTT_USER "user id"
 #  define MY_MQTT_PASSWORD "user pwd"
-#  define MY_MQTT_CLIENT_PUBLISH_RETAIN
+#  define MY_MQTT_CLIENT_PUBLISH_RETAIN_SIGNED_FLAG 1
 #  define MY_GATEWAY_MQTT_CLIENT
 #  define MY_MQTT_PUBLISH_TOPIC_PREFIX "gw-out"
 #  define MY_MQTT_SUBSCRIBE_TOPIC_PREFIX "gw-in"

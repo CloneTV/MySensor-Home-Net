@@ -17,8 +17,8 @@
 
 /* ------- BUILD-IN NODE GW COMMAND ------- */
 
-#  define IDX_Change 0
-#  define IDX_Reboot 1
+#  define IDX_Change       0
+#  define IDX_Reboot       1
 
 /*
     EventVirtual.n = sensor id
@@ -32,7 +32,11 @@ struct EventVirtualSwitch {
   uint8_t n, s, e, d;
   uint32_t rfid;
   uint64_t irid;
+#  if !defined(__AVR_INTERNAL_LIVE_COMPATIBLE__)
 } __attribute__((packed));
+#  else
+};
+#  endif 
 
 class NodeCommand : public SensorInterface<NodeCommand> {
     private:
@@ -100,7 +104,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             msg.set(val);
             (void) gatewayTransportSendToSubsribe(msg, false);
         }
-        uint8_t checkId(uint8_t id) {
+        uint8_t checkId(const uint8_t & id) {
             for (uint8_t i = 0U; i < __NELE(ev); i++) {
                 if (ev[i].n >= 100U)
                     break;
@@ -305,7 +309,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
 #           endif
             return true;
         }
-        void go_data(__attribute__ (( __unused__ )) uint16_t&) {
+        void go_data(uint16_t & cnt) {
 
 #           if defined(ENABLE_SENSOR_IR_RECEIVE)
             if (irRcv->decode(&irdata)) {
@@ -317,7 +321,8 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                         reportMsg(
                             getIrRcvId(),
                             V_IR_RECEIVE,
-                            s.c_str()
+                            s.c_str(),
+                            false
                         );
                     }
 
@@ -351,7 +356,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                     }
                     saveState(ev[i].n, ev[i].s);
                     if (WiFi.status() == WL_CONNECTED)
-                        reportMsg(ev[i].n, tdata, static_cast<bool>(ev[i].s));
+                        reportMsg(ev[i].n, tdata, static_cast<bool>(ev[i].s), false);
                 }
             }
             if (isAction[IDX_Reboot]) {
@@ -359,7 +364,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                 PRINTF("-- Reboot received! %d = (),  %lu/%lu\n", WiFi.status(), WL_CONNECTED, startOffset, millis());
 
                 if (WiFi.status() == WL_CONNECTED)
-                    reportMsg(getRebootBtnId(), V_STATUS, false);
+                    reportMsg(getRebootBtnId(), V_STATUS, false, false);
                 if (startOffset >= millis())
                     return;
                 delay(500);
@@ -368,6 +373,7 @@ class NodeCommand : public SensorInterface<NodeCommand> {
             }
         }
         bool go_data(const MyMessage & msg) {
+
             if (msg.getSender() != 0U)
                 return false;
 
@@ -385,6 +391,9 @@ class NodeCommand : public SensorInterface<NodeCommand> {
                     if (idx == SENSOR_ID_NONE)
                         return false;
                     
+                    if (startOffset >= millis())
+                        return false;
+
                     setEvent(idx, msg.getByte());
                     break;
                 }
